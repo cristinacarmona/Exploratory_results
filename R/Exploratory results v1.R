@@ -13,18 +13,19 @@
                      #Added violin plots for bs.start and bs.end
 
 #------------import files--------------------
-setwd("F:/Plovers/3rd Chapter/Exploratory results/input")
+setwd("F:/Plovers/3rd Chapter/Exploratory_results/input")
 
 csvfiles <- list.files(path = ".", pattern='*\\.csv$', all.files=TRUE)
 csvfiles
 
 import.list <- lapply(csvfiles, read.csv, header = TRUE, as.is=TRUE, na.strings=c("NA"," ",""))
 
-working.list <- import.list
+working.list <- import.list[1]
 
-names(working.list) <- c("ceuta","both0","maio")
+names(working.list) <- c("both")
 attach(working.list)
 #--------------------------------------------------------------
+both0<-both
 both<-both0
 
 names(both)
@@ -32,38 +33,43 @@ head(both)
 str(both)
 
 #-------------------------------------------------
-#0. Prepare data, Ceuta needs re-naming variables first.res.bs and last.res.bs
-
-both[both$population %in% "Ceuta",c("first.res.bs", "first.res")]
-both[both$population %in% "Ceuta",c("last.res.bs", "last.res")]
-
-both$first.res[both$population%in%"Ceuta"]<-both$first.res.bs[both$population%in% "Ceuta"]
-both$last.res[both$population %in% "Ceuta"] <- both$last.res.bs[both$population%in%"Ceuta"]
-
-str(both)
-names(both)
-cols <- c(26,27,30,31,55,56)
-both[,cols]<-lapply(both[,cols], as.Date, "%d/%m/%Y") #change columns to dates
-
-str(both[,c("first.res", "last.res","first.cap.r","last.cap.r","first.bf.adult.r", "last.bf.adult.r")])
-
-both$first.d.seen2 <- apply(both[,c("first.res", "last.res","first.cap.r","last.cap.r","first.bf.adult.r", "last.bf.adult.r")],1,function (x) min(x, na.rm=T))
-
-both$last.d.seen2 <- apply(both[,c("first.res", "last.res","first.cap.r","last.cap.r","first.bf.adult.r", "last.bf.adult.r")],1,function (x) max(x, na.rm=T))
-
-both[, c("first.d.seen","first.d.seen2")]
-head(both)
-tail(both)
+#omit next part, Ceuta's file was modified to include this already
+#0. Prepare data, Ceuta needs re-naming variables first.res.bs and last.res.bs-----
+# 
+# both[both$population %in% "Ceuta",c("first.res.bs", "first.res","first.d.seen")]
+# 
+# ind<-which(both$population %in% "Ceuta" & both$first.res.bs != both$first.res)
+# both[ind,c("first.res.bs", "first.res","first.d.seen")]
+# 
+# both[both$population %in% "Ceuta",c("last.res.bs", "last.res")]
+# 
+# both$first.res[both$population%in%"Ceuta"]<-both$first.res.bs[both$population%in% "Ceuta"]
+# both$last.res[both$population %in% "Ceuta"] <- both$last.res.bs[both$population%in%"Ceuta"]
+# 
+# str(both)
+# names(both)
+# cols <- c(26,27,30,31,55,56)
+# both[,cols]<-lapply(both[,cols], as.Date, "%d/%m/%Y") #change columns to dates
+# 
+# str(both[,c("first.res", "last.res","first.cap.r","last.cap.r","first.bf.adult.r", "last.bf.adult.r")])
+# 
+# both$first.d.seen2 <- apply(both[,c("first.res", "last.res","first.cap.r","last.cap.r","first.bf.adult.r", "last.bf.adult.r")],1,function (x) min(x, na.rm=T))
+# 
+# both$last.d.seen2 <- apply(both[,c("first.res", "last.res","first.cap.r","last.cap.r","first.bf.adult.r", "last.bf.adult.r")],1,function (x) max(x, na.rm=T))
+# 
+# both[, c("first.d.seen","first.d.seen2")]
+# head(both)
+# tail(both)
 #---------------------------------------------------
 #1. Change data structure------------- 
 #Each row should be one individual with all it's breeding events per year
 
-both$year.ring <- paste(both$year, both$ring, sep="-")
+both$year.ring <- ifelse(is.na(both$ring) & !is.na(both$code), paste(both$year, both$code, sep="-"), paste(both$year, both$ring, sep="-"))
 
 head(both[order(both$year.ring),])
 
-both$last.d.seen2 <- as.Date(both$last.d.seen2, "%Y-%m-%d")
-both$first.d.seen2 <- as.Date(both$first.d.seen2, "%Y-%m-%d")
+both$last.d.seen <- as.Date(both$last.d.seen, "%Y-%m-%d")
+both$first.d.seen <- as.Date(both$first.d.seen, "%Y-%m-%d")
 both$layingdate <- as.Date(both$layingdate, "%d/%m/%Y")
 both$found_date.r <- as.Date(both$found_date.r, "%d/%m/%Y")
 both$end_date.r <- as.Date(both$end_date.r, "%d/%m/%Y")
@@ -94,7 +100,7 @@ for(i in 1:length(both$year)){  #for loop brood fates adults
 #change to dates:
 both2<-both
 names(both2)
-cols <- c(101,103:108)
+cols <- c(101,104, 106:111)
 both2[,cols]<-lapply(both2[,cols], as.Date, origin="1970-01-01") #change columns to dates
 str(both2, list.len = 999)
 str(both, list.len = 999)
@@ -131,7 +137,7 @@ indiv <- both[-ind, c("year.ring","ring","field_sex_focal","mol_sex_focal","year
 str(both) #2114
 str(indiv) #1489
 
-#   2a. Start and end
+#   2a. Start and end---------------------
 for(i in 1:length(indiv$year.ring)){  #for loop brood fates adults
   print(i)
   options(warn=1)
@@ -193,7 +199,7 @@ head(indiv)
 # both[both$nest.id %in% "2010-S-24",]
 # 
 #----------------------------------------------------------
-#   2b. Duration
+#   2b. Duration------------------------
 str(indiv)
 indiv$bs.length <- as.numeric(indiv$bs.end - indiv$bs.start)
 
@@ -544,7 +550,7 @@ vioplot(ringed.prev4$bs.start.std[ringed.prev4$pop.fieldsex %in% "Ceuta-F"],
 #         colMed="white", pchMed=19, add=FALSE, wex=1, 
 #         drawRect=TRUE)
 
-#.-----
+#-----
 vioplot(ringed.prev4$bs.end.std[ringed.prev4$pop.fieldsex %in% "Ceuta-F"],
         ringed.prev4$bs.end.std[ringed.prev4$pop.fieldsex %in% "Ceuta-M"],
         ringed.prev4$bs.end.std[ringed.prev4$pop.fieldsex %in% "Maio-F"],
