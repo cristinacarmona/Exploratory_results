@@ -2,7 +2,7 @@
 #03/03/2016, author: Cristina Carmona-Isunza
 
 #Read files
-  setwd("F:/Plovers/3rd Chapter/Exploratory results/input")
+  setwd("F:/Plovers/3rd Chapter/Exploratory_results/input")
   csvfiles <- list.files(path = ".", pattern='*\\.csv$', all.files=TRUE)
   csvfiles
   
@@ -11,7 +11,7 @@
   
 
   working.list <- df.list
-  names(working.list) <- c("ceuta","maio")
+  names(working.list) <- c("ceuta","ceuta.maio","mad","maio","tuzla")
   
   attach(working.list)
   
@@ -20,16 +20,16 @@ ceuta$population <- "Ceuta"
 head(ceuta)
 maio$population <- "Maio"
 head(maio)
-
-
+mad$population <- "Madagascar"
+tuzla$population <- "Tuzla"
 
 #-----------------------------------------Merge
 #merge datasets
 library(gtools)
 
-all.pops<-smartbind(ceuta, maio)
+all.pops<-smartbind(ceuta, maio, mad, tuzla)
 
-write.csv(all.pops, "F:/Plovers/3rd Chapter/Exploratory results/output/ceuta_maio_bschedule.csv")
+write.csv(all.pops, "F:/Plovers/3rd Chapter/Exploratory_results/output/allpops_bschedule_13April2016.csv")
 
 
 
