@@ -12,6 +12,10 @@
 #5th log: 09/03/2016 Std dates were wrongly calculated, corrected this.
                      #Added violin plots for bs.start and bs.end
 
+#6th log: 13/04/2016: halfway through code using ALL pops
+#7th log: 14/04/2016: Trying to solve issue1
+
+
 #------------import files--------------------
 setwd("F:/Plovers/3rd Chapter/Exploratory_results/input")
 
@@ -63,8 +67,11 @@ str(both)
 #---------------------------------------------------
 #1. Change data structure------------- 
 #Each row should be one individual with all it's breeding events per year
+both$ring[both$population %in% "Ceuta"] %in% both$ring[both$population %in% "Maio"] #non of the rings in Ceuta are in Maio ,/
 
 both$year.ring <- ifelse(is.na(both$ring) & !is.na(both$code), paste(both$year, both$code, sep="-"), paste(both$year, both$ring, sep="-"))
+
+both$nest.id <- paste(both$pop.sp, both$year, both$site, both$nest, sep="-")
 
 head(both[order(both$year.ring),])
 
@@ -77,6 +84,28 @@ both$end_date.r <- as.Date(both$end_date.r, "%d/%m/%Y")
 both$ld.minus10<-both$layingdate-10
 
 str(both, list.len=500)
+
+#------------------------------------------------
+#1.a) Variables relevant to all nests: clutch_size and no_chicks
+both$clutch_size1<-NA
+both$clutch_size2<-NA
+both$clutch_size3<-NA
+both$clutch_size4<-NA
+
+i<-1
+      #1.a.i) Negative broods need found_date to be able to order all breeding events of individuals:
+  both[is.na(both$found_date.r)&is.na(both$hatching_date.r), "nest.id"]
+
+#-----------------
+for(i in 1:length(both$year)){  #for loop brood fates adults
+  print(i)
+  #options(warn=1)
+  options(warn=0)
+  ind <- which(both$year.ring[i] == both$year.ring)
+  group.nests<-both[ind,]
+  group.nests<-group.nests[order(group.nests$found_date.r),]
+
+#----------------------------------------------
 #Easier to extract earliest and latest date per individual per year...
 #Use similar for loop used to extract brood fate dates in extract_breedingschedule.R:
 
@@ -118,8 +147,11 @@ both[both$ring %in% "802122903",]
 
 #-------------explore issue1 (fate or other variables from several nests needed?)---------
 table(both$total.nests.peryear)
-aggregate(both$total.nests.peryear, by=list(both$population), table)
+both$pop.sp <- paste(both$population, both$species, sep="-")
+aggregate(both$total.nests.peryear, by=list(both$pop.sp), table)
 
+table(both[both$population %in% "Madagascar","species"], useNA="always")
+both[is.na(both$species),]
 #--------------------------------------------------------
 #---------------------------------------------------------
 
