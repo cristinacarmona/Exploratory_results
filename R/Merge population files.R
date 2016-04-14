@@ -35,14 +35,22 @@ mad$population <- "Madagascar"
 str(mad)
 names(mad)
 mad$nest.id <- paste(mad$population, mad$year, mad$species, mad$site, mad$nest, sep="-")
+
 str(mad[!is.na(mad$hatching_date.r),]) #216, after ifelse 497
 mad$hatching_date.r<-ifelse(is.na(mad$hatching_date.r) & !is.na(mad$hatch_date), mad$hatch_date, mad$hatching_date.r)
 colnames(mad)[38]<-"hatch"
 mad$hatching_date.r<-as.Date(mad$hatching_date.r, "%d/%m/%Y")
+
 ind<-which(is.na(mad$layingdate))
-mad$layingdate[ind]<-mad$hatching_date.r[ind]-25
+mad$estimated.ld<-as.Date(mad$estimated.ld)
+mad$estimated.ld[ind]<-mad$hatching_date.r[ind]-25
+mad$layingdate<-as.Date(mad$layingdate)
+mad$layingdate[ind]<-mad$estimated.ld[ind]
+
 
 tuzla$population <- "Tuzla"
+str(tuzla)
+tuzla$nest<-as.character(tuzla$nest)
 tuzla$nest.id <- paste(tuzla$population, tuzla$year, tuzla$species, tuzla$site, tuzla$nest, sep="-")
 
 #-----------------------------------------Merge
@@ -50,6 +58,7 @@ tuzla$nest.id <- paste(tuzla$population, tuzla$year, tuzla$species, tuzla$site, 
 library(gtools)
 
 all.pops<-smartbind(ceuta, maio, mad, tuzla)
+str(all.pops)
 
 write.csv(all.pops, "F:/Plovers/3rd Chapter/Exploratory_results/output/allpops_bschedule_14April2016.csv")
 
