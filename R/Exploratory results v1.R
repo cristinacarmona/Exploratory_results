@@ -14,7 +14,7 @@
 
 #6th log: 13/04/2016: halfway through code using ALL pops
 #7th log: 14/04/2016: Trying to solve issue1
-
+#8th log: 15/04/2016: Mol sexes of tuzla???
 
 #------------import files--------------------
 setwd("F:/Plovers/3rd Chapter/Exploratory_results/input")
@@ -24,17 +24,25 @@ csvfiles
 
 import.list <- lapply(csvfiles, read.csv, header = TRUE, as.is=TRUE, na.strings=c("NA"," ",""))
 
-working.list <- import.list[1]
+working.list <- import.list[3]
 
 names(working.list) <- c("both")
 attach(working.list)
+#detach(working.list)
 #--------------------------------------------------------------
 both0<-both
 both<-both0
 
 names(both)
 head(both)
-str(both)
+str(both)#5143 obs
+
+#--------function to convert dates to juliandates:---------------
+datetojulian=function(x,year)    #x has to be a date in the date format %d-%m-%Y
+{
+  origin<-as.Date(paste(year,'-01-01', sep=""))
+  juliandate<-(x-origin)+1
+}
 
 #-------------------------------------------------
 #omit next part, Ceuta's file was modified to include this already
@@ -71,12 +79,13 @@ both$ring[both$population %in% "Ceuta"] %in% both$ring[both$population %in% "Mai
 
 both$year.ring <- ifelse(is.na(both$ring) & !is.na(both$code), paste(both$year, both$code, sep="-"), paste(both$year, both$ring, sep="-"))
 
+both$pop.sp <- paste(both$population, both$species, sep="-")
 both$nest.id <- paste(both$pop.sp, both$year, both$site, both$nest, sep="-")
 
 head(both[order(both$year.ring),])
 
-both$last.d.seen <- as.Date(both$last.d.seen, "%Y-%m-%d")
-both$first.d.seen <- as.Date(both$first.d.seen, "%Y-%m-%d")
+both$last.d.seen <- as.Date(both$last.d.seen, "%d/%m/%Y")
+both$first.d.seen <- as.Date(both$first.d.seen, "%d/%m/%Y")
 both$layingdate <- as.Date(both$layingdate, "%d/%m/%Y")
 both$found_date.r <- as.Date(both$found_date.r, "%d/%m/%Y")
 both$end_date.r <- as.Date(both$end_date.r, "%d/%m/%Y")
@@ -85,91 +94,194 @@ both$ld.minus10<-both$layingdate-10
 
 str(both, list.len=500)
 
+#Restrict dataset to omit cases with no layingdate nor found_date---------
+both1<-both[!is.na(both$layingdate) | !is.na(both$found_date.r), ] #102 obs that need to be omitted
+str(both1) #5041 ,/ correct number of observations omitting 102 obs with no laying date nor founddate
+
+#And delete duplicated nests:
+
+
 #------------------------------------------------
 #1.a) Variables relevant to all nests: clutch_size and no_chicks
-both$clutch_size1<-NA
-both$clutch_size2<-NA
-both$clutch_size3<-NA
-both$clutch_size4<-NA
+both1$clutch_size1<-NA
+both1$clutch_size2<-NA
+both1$clutch_size3<-NA
+both1$clutch_size4<-NA
+both1$fate1<-NA
+both1$fate2<-NA
+both1$fate3<-NA
+both1$fate4<-NA
+both1$no_chicks1<-NA
+both1$no_chicks2<-NA
+both1$no_chicks3<-NA
+both1$no_chicks4<-NA
 
-i<-1
-      #1.a.i) Negative broods need found_date to be able to order all breeding events of individuals:
-  both[is.na(both$found_date.r)&is.na(both$hatching_date.r), "nest.id"]
+      #1.a.i) Use layingdate to order all breeding events of individuals:
+
+both1$jd.idate<- ifelse(!is.na(both1$layingdate), datetojulian(both1$layingdate, both1$year), datetojulian(both1$found_date.r, both1$year)) #julian date of initial date of a nest (using either laying_date or found_date)
 
 #-----------------
-for(i in 1:length(both$year)){  #for loop brood fates adults
+i<-which(both1$year.ring %in% "1999-4497")
+i<-1
+
+for(i in 1:length(both1$year)){  #for loop brood fates adults
   print(i)
   #options(warn=1)
   options(warn=0)
-  ind <- which(both$year.ring[i] == both$year.ring)
-  group.nests<-both[ind,]
-  group.nests<-group.nests[order(group.nests$found_date.r),]
+  ind <- which(both1$year.ring[i] == both1$year.ring)
+  group.nests<-both1[ind,]
+  group.nests<-group.nests[order(group.nests$jd.idate),]
+  both1$total.nests.peryear[i] <- length(group.nests$year)
+  
+  if(length(group.nests$year)==1){
+    both1$ordinal.nest.peryear[i]<-1
+    both1$clutch_size1[i]<-group.nests$clutch_size[1]
+    both1$no_chicks1[i]<-group.nests$no_chicks[1]
+    both1$fate1[i]<-group.nests$fate[1]
+    
+    both1$earliest.seen[i] <- min(group.nests$first.d.seen, na.rm=T)
+    both1$latest.seen[i] <- max(group.nests$last.d.seen, na.rm=T)
+    both1$min.ldminus10[i] <- min(group.nests$ld.minus10, na.rm=T)
+    both1$earliest.founddate[i] <- min(group.nests$found_date.r, na.rm=T)
+    both1$latest.enddate[i] <- max(group.nests$end_date.r, na.rm=T)
+    both1$min.layingdate[i] <- min(group.nests$layingdate, na.rm=T)
+  }else{
+    if(length(group.nests$year)==2){
+      both1$ordinal.nest.peryear[i]<-ifelse(both1$nest.id[i] %in% group.nests$nest.id[1],1,2)
+      both1$clutch_size1[i]<-group.nests$clutch_size[1]
+      both1$clutch_size2[i]<-group.nests$clutch_size[2]
+      both1$no_chicks1[i]<-group.nests$no_chicks[1]
+      both1$no_chicks2[i]<-group.nests$no_chicks[2]
+      both1$fate1[i]<-group.nests$fate[1]
+      both1$fate2[i]<-group.nests$fate[2]
+      
+      both1$earliest.seen[i] <- min(group.nests$first.d.seen, na.rm=T)
+      both1$latest.seen[i] <- max(group.nests$last.d.seen, na.rm=T)
+      both1$min.ldminus10[i] <- min(group.nests$ld.minus10, na.rm=T)
+      both1$earliest.founddate[i] <- min(group.nests$found_date.r, na.rm=T)
+      both1$latest.enddate[i] <- max(group.nests$end_date.r, na.rm=T)
+      both1$min.layingdate[i] <- min(group.nests$layingdate, na.rm=T)
+      
+      }else{
+        if(length(group.nests$year)==3){
+        both1$ordinal.nest.peryear[i]<-ifelse(both1$nest.id[i] %in% group.nests$nest.id[1], 1,
+                                              ifelse(both1$nest.id[i]%in%group.nests$nest.id[2],2,3))
+        both1$clutch_size1[i]<-group.nests$clutch_size[1]
+        both1$clutch_size2[i]<-group.nests$clutch_size[2]
+        both1$clutch_size3[i]<-group.nests$clutch_size[3]
+        both1$no_chicks1[i]<-group.nests$no_chicks[1]
+        both1$no_chicks2[i]<-group.nests$no_chicks[2]
+        both1$no_chicks3[i]<-group.nests$no_chicks[3]
+        both1$fate1[i]<-group.nests$fate[1]
+        both1$fate2[i]<-group.nests$fate[2]
+        both1$fate3[i]<-group.nests$fate[3]
+        
+        both1$earliest.seen[i] <- min(group.nests$first.d.seen, na.rm=T)
+        both1$latest.seen[i] <- max(group.nests$last.d.seen, na.rm=T)
+        both1$min.ldminus10[i] <- min(group.nests$ld.minus10, na.rm=T)
+        both1$earliest.founddate[i] <- min(group.nests$found_date.r, na.rm=T)
+        both1$latest.enddate[i] <- max(group.nests$end_date.r, na.rm=T)
+        both1$min.layingdate[i] <- min(group.nests$layingdate, na.rm=T)
+        
+        }else{
+          if(length(group.nests$year)==4){
+          both1$ordinal.nest.peryear[i]<-ifelse(both1$nest.id[i] %in% group.nests$nest.id[1], 1,
+                                                ifelse(both1$nest.id[i]%in%group.nests$nest.id[2],2,
+                                                       ifelse(both1$nest.id[i]%in%group.nests$nest.id[3],3,4)))
+          both1$clutch_size1[i]<-group.nests$clutch_size[1]
+          both1$clutch_size2[i]<-group.nests$clutch_size[2]
+          both1$clutch_size3[i]<-group.nests$clutch_size[3]
+          both1$clutch_size4[i]<-group.nests$clutch_size[4]
+          both1$no_chicks1[i]<-group.nests$no_chicks[1]
+          both1$no_chicks2[i]<-group.nests$no_chicks[2]
+          both1$no_chicks3[i]<-group.nests$no_chicks[3]
+          both1$no_chicks4[i]<-group.nests$no_chicks[4]
+          both1$fate1[i]<-group.nests$fate[1]
+          both1$fate2[i]<-group.nests$fate[2]
+          both1$fate3[i]<-group.nests$fate[3]
+          both1$fate4[i]<-group.nests$fate[4]
+          
+          both1$earliest.seen[i] <- min(group.nests$first.d.seen, na.rm=T)
+          both1$latest.seen[i] <- max(group.nests$last.d.seen, na.rm=T)
+          both1$min.ldminus10[i] <- min(group.nests$ld.minus10, na.rm=T)
+          both1$earliest.founddate[i] <- min(group.nests$found_date.r, na.rm=T)
+          both1$latest.enddate[i] <- max(group.nests$end_date.r, na.rm=T)
+          both1$min.layingdate[i] <- min(group.nests$layingdate, na.rm=T)
+          }
+        }
+      }
+  }
+}
 
 #----------------------------------------------
 #Easier to extract earliest and latest date per individual per year...
 #Use similar for loop used to extract brood fate dates in extract_breedingschedule.R:
-
-
-for(i in 1:length(both$year)){  #for loop brood fates adults
-  print(i)
-  #options(warn=1)
-  options(warn=0)
-  ind <- which(both$year.ring[i] == both$year.ring)
-  group.nests<-both[ind,]
-  
-  both$total.nests.peryear[i] <- length(group.nests$year)
-  both$earliest.seen[i] <- min(group.nests$first.d.seen2, na.rm=T)
-  both$latest.seen[i] <- max(group.nests$last.d.seen2, na.rm=T)
-  both$min.ldminus10[i] <- min(group.nests$ld.minus10, na.rm=T)
-  both$earliest.founddate[i] <- min(group.nests$found_date.r, na.rm=T)
-  both$latest.enddate[i] <- max(group.nests$end_date.r, na.rm=T)
-  both$min.layingdate[i] <- min(group.nests$layingdate, na.rm=T)
-}
+# 
+# 
+# for(i in 1:length(both$year)){  #for loop brood fates adults
+#   print(i)
+#   #options(warn=1)
+#   options(warn=0)
+#   ind <- which(both$year.ring[i] == both$year.ring)
+#   group.nests<-both[ind,]
+#   
+#   #both$total.nests.peryear[i] <- length(group.nests$year)
+#   both$earliest.seen[i] <- min(group.nests$first.d.seen2, na.rm=T)
+#   both$latest.seen[i] <- max(group.nests$last.d.seen2, na.rm=T)
+#   both$min.ldminus10[i] <- min(group.nests$ld.minus10, na.rm=T)
+#   both$earliest.founddate[i] <- min(group.nests$found_date.r, na.rm=T)
+#   both$latest.enddate[i] <- max(group.nests$end_date.r, na.rm=T)
+#   both$min.layingdate[i] <- min(group.nests$layingdate, na.rm=T)
+# }
 
 #change to dates:
-both2<-both
+both2<-both1
 names(both2)
-cols <- c(101,104, 106:111)
+cols <- c(115:120)
 both2[,cols]<-lapply(both2[,cols], as.Date, origin="1970-01-01") #change columns to dates
 str(both2, list.len = 999)
 str(both, list.len = 999)
+
 #-----------debug------
+unique(both1$year.ring) #4465 nests with ordinal.nest.peryear ==1 should be equal to this number:
+un.ids<-both2[both2$ordinal.nest.peryear==1,]
+str(both2[both2$ordinal.nest.peryear==1,]) #4469....4 more...why? ,/ corrected
+setdiff(unique(both1$year.ring), unique(un.ids$year.ring)) #SAME IDS....but there are some repeated?? Duplicated nests in file
 
-tail(both2[order(both2$year.ring),])
+ind<-which(duplicated(un.ids$year.ring)|duplicated(un.ids$year.ring, fromLast=T))
+un.ids[ind,"nest.id"] #none after corrections
+#some of the duplicated nests were duplicated because the mate's ring was equal to the focal's ring. 
+#Deleted duplicate ids by hand in file v3 15/04/2016
+# [1] "Maio-KP-2008-S--16"   "Maio-KP-2008-S--18"   "Maio-KP-2010-S-66"    "Maio-KP-2008-S--16"   "Maio-KP-2008-S--18"   "Maio-KP-2010-S-66"    "Tuzla-KP-1996-B-1276"
+# [8] "Tuzla-KP-1996-B-1276" (Deleted one)
 
-tail(both[order(both$year.ring) & both$total.nests.peryear>1,], n=-528)
+head(both2[both2$ordinal.nest.peryear==1,])
 
-ind<-both$nest.id[both$total.nests.peryear>1]
 
-head(both[both$nest.id %in% ind,])
-both[both$ring %in% "802122903",]
-#------------------------
 
-#-------------explore issue1 (fate or other variables from several nests needed?)---------
-table(both$total.nests.peryear)
-both$pop.sp <- paste(both$population, both$species, sep="-")
-aggregate(both$total.nests.peryear, by=list(both$pop.sp), table)
+ind<-sample(rownames(un.ids),10)
+un.ids[ind,]
 
-table(both[both$population %in% "Madagascar","species"], useNA="always")
-both[is.na(both$species),]
+# tail(both2[order(both2$year.ring),])
+# 
+# tail(both[order(both$year.ring) & both$total.nests.peryear>1,], n=-528)
+# 
+# ind<-both$nest.id[both$total.nests.peryear>1]
+# 
+# head(both[both$nest.id %in% ind,])
+# both[both$ring %in% "802122903",]
 #--------------------------------------------------------
 #---------------------------------------------------------
 
 #2. Calculate duration of breeding schedule----
 #Definition of breeding schedule:
 #     The overall time spent in the breeding area of each focal individual in a specific breeding season. 
-both<-both2
-names(both)
-ind <- which(duplicated(both$year.ring) | duplicated(both$year.ring, fromLast=TRUE))
-indiv <- both[-ind, c("year.ring","ring","field_sex_focal","mol_sex_focal","year.cr","year.mr","mate_ring", "field_sex_mate","mol_sex_mate","earliest.seen","latest.seen",
-                      "min.ldminus10","population","fate",
-                      "total.nests.peryear","min.layingdate","earliest.founddate","latest.enddate")#,"nest.id","nest")
-              ]
-
-str(both) #2114
-str(indiv) #1489
+indiv<-un.ids
+names(indiv)
+str(indiv) #4465
 
 #   2a. Start and end---------------------
+i<-4429
 for(i in 1:length(indiv$year.ring)){  #for loop brood fates adults
   print(i)
   options(warn=1)
@@ -235,7 +347,7 @@ head(indiv)
 str(indiv)
 indiv$bs.length <- as.numeric(indiv$bs.end - indiv$bs.start)
 
-str(indiv[indiv$bs.length ==0,]) #seen once and layingdates not known, only bred once in a year = 9 obs
+str(indiv[indiv$bs.length ==0,]) #seen once and layingdates not known, only bred once in a year = 8 obs
 
 
 
@@ -252,10 +364,17 @@ str(indiv[indiv$bs.length ==0,]) #seen once and layingdates not known, only bred
 #explore issue2: conflicting sexes--------------
 
 u1<-indiv[indiv$mol_sex_focal == indiv$mol_sex_mate & !is.na(indiv$year.ring),]
-u1<-u1[!is.na(u1$year.ring),]
+head(u1)
+u1<-u1[!is.na(u1$population),] #89 cases where mol_sex_focal is equal to mol_sex_mate
+str(u1)
+table(u1$population)
+# Ceuta Madagascar       Maio 
+# 5         55         29 
 
-u2<-both[both$mol_sex_focal == both$mol_sex_mate,]
-u2<-u2[!is.na(u2$year.ring),]
+#flag these cases:
+indiv$sex.reliable<-ifelse(indiv$year.ring %in% u1$year.ring, "conflicting sex", NA)
+str(indiv[indiv$sex.reliable %in% "conflicting sex",]) #89 ,/
+
 #---------------------------------------------
 
 #----------------------------------------------------
@@ -265,25 +384,26 @@ u2<-u2[!is.na(u2$year.ring),]
 #plus sample needs to be restricted to individuals ringed in previous years only
 
 head(indiv)
-indiv$year<-substr(indiv$year.ring, 1,4)
+#indiv$year<-substr(indiv$year.ring, 1,4)
 table(indiv$year)
-# 2006 2007 2008 2009 2010 2011 2012 2013 2014 2015 
-# 154  175  135  187  243   86  162  119  117  111
+# 1996 1997 1998 1999 2000 2004 2006 2007 2008 2009 2010 2011 2012 2013 2014 2015 
+# 208  344  185  355   46  147  197  224  162  246  369  103  298  499  389  693 
 
 ind<-which(indiv$year.cr < indiv$year)
 ringed.prev<-indiv[ind,]
-str(ringed.prev) #654
+str(ringed.prev) #654, 1357 obs
 
 #Use mol_sex---------------------------
 #how many males and females with mol_sex?
-table(indiv$mol_sex_focal) #without restricting to indiv ringed in previous year
-# F   M    NA
-# 507 597 473
+table(indiv$mol_sex_focal, useNA="always") #without restricting to indiv ringed in previous year
+# ?          f          F          M no mol_sex          X       <NA> 
+#   12         12       1441       1489         16          5       1490 
+
 length(indiv$mol_sex_focal) #1489
 indiv2<-indiv[!is.na(indiv$mol_sex_focal),] #only indiv with mol_sex
 #indiv<-indiv2
 
-str(indiv2)#1104
+str(indiv2)#2975
 str(indiv)#1489
 
 indiv$pop.molsex <- paste(indiv$population, indiv$mol_sex_focal, sep="-")
@@ -291,13 +411,14 @@ unique(indiv$pop.molsex)
 indiv$pop.molsex<-factor(indiv$pop.molsex)
 #--------------
 
-table(ringed.prev$mol_sex_focal) #restricting to indiv ringed in previous year
-# F   M     NA
-# 212 267   175
+table(ringed.prev$mol_sex_focal, useNA="always") #restricting to indiv ringed in previous year
+# ?          f          F          M      no mol_sex     X       <NA> 
+# 5          1        498        522          6          1        324 
 length(ringed.prev$mol_sex_focal) #654
 
-ringed.prev2<-ringed.prev[!is.na(ringed.prev$mol_sex_focal),] #only indiv with mol_sex
-ringed.prev2$pop.molsex <- paste(ringed.prev2$population, ringed.prev2$mol_sex_focal, sep="-")
+#this won't work as Tuzla has no mol_sexes
+#ringed.prev2<-ringed.prev[!is.na(ringed.prev$mol_sex_focal),] #only indiv with mol_sex
+#ringed.prev2$pop.molsex <- paste(ringed.prev2$population, ringed.prev2$mol_sex_focal, sep="-")
 unique(ringed.prev2$pop.molsex)
 ringed.prev2$pop.molsex<-factor(ringed.prev2$pop.molsex)
 
