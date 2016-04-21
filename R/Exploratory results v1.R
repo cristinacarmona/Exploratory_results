@@ -375,8 +375,16 @@ table(u1$population)
 indiv$sex.reliable<-ifelse(indiv$year.ring %in% u1$year.ring, "conflicting sex", NA)
 str(indiv[indiv$sex.reliable %in% "conflicting sex",]) #89 ,/
 
-#---------------------------------------------
+#------------------------------------------------------------------------
+#--------------write file-----------------------------------------------
 
+write.csv(indiv, "F:/Plovers/3rd Chapter/Exploratory_results/output/bs_data_per_indiv.csv")
+#----------------------------------------------------
+#---------------------------------------------
+#----------------------------------------------------
+#Preliminary figures for Lab meeting and Sex determination Conflict, March-April 2016------
+#----------------------------------------------------
+#----------------------------------------------------
 #----------------------------------------------------
 #plot males vs females length of bs ONLY WITH mol_sex (in Ceuta these is not True for all...)
 
@@ -406,9 +414,10 @@ indiv2<-indiv[!is.na(indiv$mol_sex_focal),] #only indiv with mol_sex
 str(indiv2)#2975
 str(indiv)#1489
 
-indiv$pop.molsex <- paste(indiv$population, indiv$mol_sex_focal, sep="-")
+indiv$pop.sp.molsex <- paste(indiv$population, indiv$species,indiv$mol_sex_focal, sep="-")
 unique(indiv$pop.molsex)
-indiv$pop.molsex<-factor(indiv$pop.molsex)
+indiv$pop.sp.molsex<-factor(indiv$pop.sp.molsex)
+table(indiv$pop.sp.molsex)
 #--------------
 
 table(ringed.prev$mol_sex_focal, useNA="always") #restricting to indiv ringed in previous year
@@ -424,17 +433,21 @@ ringed.prev2$pop.molsex<-factor(ringed.prev2$pop.molsex)
 
 #Use field_sex and ringed.prev2------------
 ringed.prev
-ringed.prev$pop.fieldsex <- paste(ringed.prev$population, ringed.prev$field_sex_focal, sep="-")
-ringed.prev$pop.fieldsex<-factor(ringed.prev$pop.fieldsex)
+ringed.prev$pop.sp.fieldsex <- paste(ringed.prev$population,ringed.prev$species, ringed.prev$field_sex_focal, sep="-")
+ringed.prev$pop.sp.fieldsex<-factor(ringed.prev$pop.sp.fieldsex)
 
 table(ringed.prev$field_sex_focal)
 # F   M     NA
 # 302 352    0
 length(ringed.prev$field_sex_focal)#654
 
-table(ringed.prev$pop.fieldsex)
+table(ringed.prev$pop.sp.fieldsex)
 # Ceuta-F Ceuta-M  Maio-F  Maio-M 
 # 88     166     214     186 
+# Ceuta-SP-F       Ceuta-SP-M       Tuzla-KP-F       Tuzla-KP-M  Madagascar-MP-F  Madagascar-MP-M        Maio-KP-F 
+# 150              203              138              122               20               21              252 
+# Maio-KP-M Madagascar-WfP-F Madagascar-WfP-M Madagascar-KiP-F Madagascar-KiP-M 
+# 221               56               53               55               66 
 
 #-----------------------------
 #histogram
@@ -460,110 +473,223 @@ max(ringed.prev$bs.length)#140
 table(ringed.prev$pop.fieldsex) #C) sample sizes of sample for indiv with fieldsex and ringed at least in the prev year
 # Ceuta-F Ceuta-M  Maio-F  Maio-M 
 # 88     166     214     186 
+# Ceuta-F      Ceuta-M Madagascar-F Madagascar-M       Maio-F       Maio-M   Tuzla-F   Tuzla-M 
+# 150          203          131          140          252          221          138          122 
+
+# #A) plot for indiv with mol sex and ringed anytime
+# setwd("F:/Plovers/3rd Chapter/Exploratory results/plots")
+# tiff("test3.tiff", width=100, height=120, units="mm", res=500)
+# par(mfrow=c(1,1))
+# boxplot(bs.length~pop.molsex, data=indiv,                                                                            
+#         #horizontal = T,
+#         names = c("", "", "", ""),
+#         ylab="",                  
+#         at =c(1,2, 4,5), #specify position of each boxplot on x
+#         par(mar = c(7, 4, 4, 2)+ 0.1),    #enlarge plot's window default is c(5, 4, 4, 2) + 0.1.
+#         par(cex.lab=0.75), 
+#         par(cex.axis=0.7), 
+#         yaxt='n', 
+#         ylim=c(0,200),                                                                
+#         boxwex=0.3, outwex=0.3,
+#         outcex=0.5)                                                                                                                    
+# mtext("   Ceuta (SP)                          Maio (KP)",                                                                       
+#       side = 1, line = 1.5, cex = 0.75)                                                                                                
+# y<-seq(0,200, 20)
+# axis(2, at=y,las=1, cex.axis=0.7) 
+#                                                                                                                          
+# mtext("Length of breeding shcedules (days)", side=2, line=2.5, cex=0.75)
+# #mtext("schedules (days)", side=2, line=2, cex=0.75)
+# mtext("Females", side=1, line=0.5, at=1, las=1,cex=0.6)
+# mtext("Males", side=1, line=0.5, at=2, las=1, cex=0.6)
+# mtext("Females", side=1, line=0.5, at=4, las=1,cex=0.6)
+# mtext("Males", side=1, line=0.5, at=5, las=1, cex=0.6)
+# #add sample sizes on top
+# mtext("264", side= 3, line = 0.5, at=1, cex=0.6)
+# mtext("379", side =3, line = 0.5, at=2, cex=0.6)
+# mtext("243", side=3, line=0.5, at=4, cex=0.6)
+# mtext("218", side=3, line=0.5, at=5, cex=0.6)
+# dev.off()
+# 
+# ##B) plot for indiv with mol sex and ringed at least the previous year
+# setwd("F:/Plovers/3rd Chapter/Exploratory results/plots")
+# tiff("test1ringedprev.tiff", width=100, height=120, units="mm", res=500)
+# par(mfrow=c(1,1))
+# boxplot(bs.length~pop.molsex, data=ringed.prev2,                                                                            
+#         #horizontal = T,
+#         names = c("", "", "", ""),
+#         ylab="",                  
+#         at =c(1,2, 4,5), #specify position of each boxplot on x
+#         par(mar = c(7, 4, 4, 2)+ 0.1),    #enlarge plot's window default is c(5, 4, 4, 2) + 0.1.
+#         par(cex.lab=0.75), 
+#         par(cex.axis=0.7), 
+#         yaxt='n', 
+#         ylim=c(0,150),                                                                
+#         boxwex=0.3, outwex=0.3,
+#         outcex=0.5)                                                                                                                    
+# mtext("   Ceuta (SP)                          Maio (KP)",                                                                       
+#       side = 1, line = 1.5, cex = 0.75)                                                                                                
+# y<-seq(0,160, 20)
+# axis(2, at=y,las=1, cex.axis=0.7) 
+# 
+# mtext("Length of breeding shcedules (days)", side=2, line=2.5, cex=0.75)
+# #mtext("schedules (days)", side=2, line=2, cex=0.75)
+# mtext("Females", side=1, line=0.5, at=1, las=1,cex=0.6)
+# mtext("Males", side=1, line=0.5, at=2, las=1, cex=0.6)
+# mtext("Females", side=1, line=0.5, at=4, las=1,cex=0.6)
+# mtext("Males", side=1, line=0.5, at=5, las=1, cex=0.6)
+# #add sample sizes on top
+# mtext("88", side= 3, line = 0.5, at=1, cex=0.6)
+# mtext("166", side =3, line = 0.5, at=2, cex=0.6)
+# mtext("124", side=3, line=0.5, at=4, cex=0.6)
+# mtext("101", side=3, line=0.5, at=5, cex=0.6)
+# dev.off()
 
 
-#A) plot for indiv with mol sex and ringed anytime
-setwd("F:/Plovers/3rd Chapter/Exploratory results/plots")
-tiff("test3.tiff", width=100, height=120, units="mm", res=500)
-par(mfrow=c(1,1))
-boxplot(bs.length~pop.molsex, data=indiv,                                                                            
-        #horizontal = T,
-        names = c("", "", "", ""),
-        ylab="",                  
-        at =c(1,2, 4,5), #specify position of each boxplot on x
-        par(mar = c(7, 4, 4, 2)+ 0.1),    #enlarge plot's window default is c(5, 4, 4, 2) + 0.1.
-        par(cex.lab=0.75), 
-        par(cex.axis=0.7), 
-        yaxt='n', 
-        ylim=c(0,200),                                                                
-        boxwex=0.3, outwex=0.3,
-        outcex=0.5)                                                                                                                    
-mtext("   Ceuta (SP)                          Maio (KP)",                                                                       
-      side = 1, line = 1.5, cex = 0.75)                                                                                                
-y<-seq(0,200, 20)
-axis(2, at=y,las=1, cex.axis=0.7) 
-                                                                                                                         
-mtext("Length of breeding shcedules (days)", side=2, line=2.5, cex=0.75)
-#mtext("schedules (days)", side=2, line=2, cex=0.75)
-mtext("Females", side=1, line=0.5, at=1, las=1,cex=0.6)
-mtext("Males", side=1, line=0.5, at=2, las=1, cex=0.6)
-mtext("Females", side=1, line=0.5, at=4, las=1,cex=0.6)
-mtext("Males", side=1, line=0.5, at=5, las=1, cex=0.6)
-#add sample sizes on top
-mtext("264", side= 3, line = 0.5, at=1, cex=0.6)
-mtext("379", side =3, line = 0.5, at=2, cex=0.6)
-mtext("243", side=3, line=0.5, at=4, cex=0.6)
-mtext("218", side=3, line=0.5, at=5, cex=0.6)
-dev.off()
-
-##B) plot for indiv with mol sex and ringed at least the previous year
-setwd("F:/Plovers/3rd Chapter/Exploratory results/plots")
-tiff("test1ringedprev.tiff", width=100, height=120, units="mm", res=500)
-par(mfrow=c(1,1))
-boxplot(bs.length~pop.molsex, data=ringed.prev2,                                                                            
-        #horizontal = T,
-        names = c("", "", "", ""),
-        ylab="",                  
-        at =c(1,2, 4,5), #specify position of each boxplot on x
-        par(mar = c(7, 4, 4, 2)+ 0.1),    #enlarge plot's window default is c(5, 4, 4, 2) + 0.1.
-        par(cex.lab=0.75), 
-        par(cex.axis=0.7), 
-        yaxt='n', 
-        ylim=c(0,150),                                                                
-        boxwex=0.3, outwex=0.3,
-        outcex=0.5)                                                                                                                    
-mtext("   Ceuta (SP)                          Maio (KP)",                                                                       
-      side = 1, line = 1.5, cex = 0.75)                                                                                                
-y<-seq(0,160, 20)
-axis(2, at=y,las=1, cex.axis=0.7) 
-
-mtext("Length of breeding shcedules (days)", side=2, line=2.5, cex=0.75)
-#mtext("schedules (days)", side=2, line=2, cex=0.75)
-mtext("Females", side=1, line=0.5, at=1, las=1,cex=0.6)
-mtext("Males", side=1, line=0.5, at=2, las=1, cex=0.6)
-mtext("Females", side=1, line=0.5, at=4, las=1,cex=0.6)
-mtext("Males", side=1, line=0.5, at=5, las=1, cex=0.6)
-#add sample sizes on top
-mtext("88", side= 3, line = 0.5, at=1, cex=0.6)
-mtext("166", side =3, line = 0.5, at=2, cex=0.6)
-mtext("124", side=3, line=0.5, at=4, cex=0.6)
-mtext("101", side=3, line=0.5, at=5, cex=0.6)
-dev.off()
-
-
-##c) plot for indiv with mol sex and ringed at least the previous year
+##c) plot for indiv with field sex and ringed at least the previous year
 setwd("F:/Plovers/3rd Chapter/Exploratory results/plots")
 tiff("ringedprev_fieldsex.tiff", width=100, height=120, units="mm", res=500)
 par(mfrow=c(1,1))
-boxplot(bs.length~pop.fieldsex, data=ringed.prev,                                                                            
+
+#reorder factor levels:
+print(levels(ringed.prev$pop.sp.fieldsex))
+ringed.prev$pop.sp.fieldsex <- factor(ringed.prev$pop.sp.fieldsex, levels(ringed.prev$pop.sp.fieldsex)[c(1,2,11,12,5,6,9,10,7,8,3,4)])
+#plot:
+boxplot(bs.length~pop.sp.fieldsex, data=ringed.prev,                                                                            
         #horizontal = T,
-        names = c("", "", "", ""),
+        names = c("", "", "", "", "","","","","","","",""),
         ylab="",                  
-        at =c(1,2, 4,5), #specify position of each boxplot on x
+        at =c(1,2, 4,5, 7,8, 10,11, 13,14, 16,17), #specify position of each boxplot on x
         par(mar = c(7, 4, 4, 2)+ 0.1),    #enlarge plot's window default is c(5, 4, 4, 2) + 0.1.
         par(cex.lab=0.75), 
         par(cex.axis=0.7), 
         yaxt='n', 
         ylim=c(0,150),                                                                
         boxwex=0.3, outwex=0.3,
-        outcex=0.5)                                                                                                                    
-mtext("   Ceuta (SP)                          Maio (KP)",                                                                       
-      side = 1, line = 1.5, cex = 0.75)                                                                                                
+        outcex=0.5)                                                                                                                                                                                                      
 y<-seq(0,160, 20)
 axis(2, at=y,las=1, cex.axis=0.7) 
 
 mtext("Length of breeding shcedules (days)", side=2, line=2.5, cex=0.75)
 #mtext("schedules (days)", side=2, line=2, cex=0.75)
-mtext("Females", side=1, line=0.5, at=1, las=1,cex=0.6)
-mtext("Males", side=1, line=0.5, at=2, las=1, cex=0.6)
-mtext("Females", side=1, line=0.5, at=4, las=1,cex=0.6)
-mtext("Males", side=1, line=0.5, at=5, las=1, cex=0.6)
+mtext("F", side=1, line=0.5, at=1, las=1,cex=0.6)
+mtext("M", side=1, line=0.5, at=2, las=1, cex=0.6)
+mtext("Ceuta (SP)", side = 1, line = 1.5,at=1.5, cex = 0.50)
+
+mtext("F", side=1, line=0.5, at=4, las=1,cex=0.6)
+mtext("M", side=1, line=0.5, at=5, las=1, cex=0.6)
+mtext("Tuzla (KP)", side = 1, line = 1.5,at=4.5, cex = 0.50)
+
+mtext("F", side=1, line=0.5, at=7, las=1,cex=0.6)
+mtext("M", side=1, line=0.5, at=8, las=1, cex=0.6)
+mtext("Mad (MP)", side = 1, line = 1.5,at=7.5, cex = 0.50)
+
+mtext("F", side=1, line=0.5, at=10, las=1,cex=0.6)
+mtext("M", side=1, line=0.5, at=11, las=1, cex=0.6)
+mtext("Maio (KP)", side = 1, line = 1.5,at=10.5, cex = 0.50)
+
+mtext("F", side=1, line=0.5, at=13, las=1,cex=0.6)
+mtext("M", side=1, line=0.5, at=14, las=1, cex=0.6)
+mtext("Mad (WfP)", side = 1, line = 1.5,at=13.5, cex = 0.50)
+
+mtext("F", side=1, line=0.5, at=16, las=1,cex=0.6)
+mtext("M", side=1, line=0.5, at=17, las=1, cex=0.6)
+mtext("Mad (KiP)", side = 1, line = 1.5,at=16.5, cex = 0.50)
+
 #add sample sizes on top
-mtext("88", side= 3, line = 0.5, at=1, cex=0.6)
-mtext("166", side =3, line = 0.5, at=2, cex=0.6)
-mtext("214", side=3, line=0.5, at=4, cex=0.6)
-mtext("186", side=3, line=0.5, at=5, cex=0.6)
+# Ceuta-SP-F       Ceuta-SP-M       Tuzla-KP-F       Tuzla-KP-M  Madagascar-MP-F  Madagascar-MP-M        Maio-KP-F 
+# 150              203              138              122               20               21              252 
+# Maio-KP-M Madagascar-WfP-F Madagascar-WfP-M Madagascar-KiP-F Madagascar-KiP-M 
+# 221               56               53               55               66 
+mtext(c("150","203","138","122","20","21","252","221","56","53","55","66"), side= 3, line = 0.5, 
+      at=c(1,2,4,5,7,8,10,11,13,14,16,17), cex=0.6)
 dev.off()
+
+#---------------------------------------------------------
+#Try plotting mol_sex when available and field_sex in Tuzla ONLY
+ringed.prev$pop.sp.sex<-ifelse(ringed.prev$population %in% "Tuzla", 
+                               paste(ringed.prev$population, ringed.prev$species, ringed.prev$field_sex_focal, sep="-"),
+                               paste(ringed.prev$population, ringed.prev$species, ringed.prev$mol_sex_focal, sep="-"))
+
+table(ringed.prev$pop.sp.sex)
+
+factors.pop.sp.sex<-factor(ringed.prev$pop.sp.sex)
+factors.wanted<-levels(factors.pop.sp.sex)[c(3,4,20,21,10,11,16,17,13,14,7,8)]
+
+plot.data<-ringed.prev[ringed.prev$pop.sp.sex %in% factors.wanted,]
+plot.data$pop.sp.sex<-factor(plot.data$pop.sp.sex,levels(plot.data$pop.sp.sex)[c(1,2,11,12,5,6,9,10,7,8,3,4)])
+print(levels(plot.data$pop.sp.sex))
+
+table(plot.data$pop.sp.sex)
+# Ceuta-SP-F       Ceuta-SP-M       Tuzla-KP-F       Tuzla-KP-M  Madagascar-MP-F  Madagascar-MP-M        Maio-KP-F 
+# 142              181              138              122               17               17              241 
+# Maio-KP-M Madagascar-WfP-F Madagascar-WfP-M Madagascar-KiP-F Madagascar-KiP-M 
+# 220               54               49               44               55 
+
+#---------------plot:
+setwd("F:/Plovers/3rd Chapter/Exploratory_results/plots")
+tiff("ringedprev_molsex(tuzla fieldsex).tiff", width=120, height=100, units="mm", res=500)
+par(mfrow=c(1,1))
+
+#reorder factor levels:
+
+#plot:
+boxplot(bs.length~pop.sp.sex, data=plot.data,                                                                            
+        #horizontal = T,
+        names = c("", "", "", "", "","","","","","","",""),
+        ylab="",                  
+        at =c(1,2, 4,5, 7,8, 10,11, 13,14, 16,17), #specify position of each boxplot on x
+        par(mar = c(7, 4, 4, 2)+ 0.1),    #enlarge plot's window default is c(5, 4, 4, 2) + 0.1.
+        par(cex.lab=0.75), 
+        par(cex.axis=0.7), 
+        yaxt='n', 
+        ylim=c(0,150),                                                                
+        boxwex=0.3, outwex=0.3,
+        outcex=0.5)                                                                                                                                                                                                      
+y<-seq(0,160, 20)
+axis(2, at=y,las=1, cex.axis=0.7) 
+
+mtext("Length of breeding shcedules (days)", side=2, line=2.5, cex=0.75)
+#mtext("schedules (days)", side=2, line=2, cex=0.75)
+mtext("F", side=1, line=0.5, at=1, las=1,cex=0.6)
+mtext("M", side=1, line=0.5, at=2, las=1, cex=0.6)
+mtext("Ceuta (SP)", side = 1, line = 1.5,at=1.5, cex = 0.50)
+
+mtext("F", side=1, line=0.5, at=4, las=1,cex=0.6)
+mtext("M", side=1, line=0.5, at=5, las=1, cex=0.6)
+mtext("Tuzla (KP)", side = 1, line = 1.5,at=4.5, cex = 0.50)
+
+mtext("F", side=1, line=0.5, at=7, las=1,cex=0.6)
+mtext("M", side=1, line=0.5, at=8, las=1, cex=0.6)
+mtext("Mad (MP)", side = 1, line = 1.5,at=7.5, cex = 0.50)
+
+mtext("F", side=1, line=0.5, at=10, las=1,cex=0.6)
+mtext("M", side=1, line=0.5, at=11, las=1, cex=0.6)
+mtext("Maio (KP)", side = 1, line = 1.5,at=10.5, cex = 0.50)
+
+mtext("F", side=1, line=0.5, at=13, las=1,cex=0.6)
+mtext("M", side=1, line=0.5, at=14, las=1, cex=0.6)
+mtext("Mad (WfP)", side = 1, line = 1.5,at=13.5, cex = 0.50)
+
+mtext("F", side=1, line=0.5, at=16, las=1,cex=0.6)
+mtext("M", side=1, line=0.5, at=17, las=1, cex=0.6)
+mtext("Mad (KiP)", side = 1, line = 1.5,at=16.5, cex = 0.50)
+
+#add sample sizes on top
+# Ceuta-SP-F       Ceuta-SP-M       Tuzla-KP-F       Tuzla-KP-M  Madagascar-MP-F  Madagascar-MP-M        Maio-KP-F 
+# 142              181              138              122               17               17              241 
+# Maio-KP-M Madagascar-WfP-F Madagascar-WfP-M Madagascar-KiP-F Madagascar-KiP-M 
+# 220               54               49               44               55 
+mtext(c("142","181","138","122","17","17","241","220","54","49","44","55"), side= 3, line = 0.5, 
+      at=c(1,2,4,5,7,8,10,11,13,14,16,17), cex=0.5)
+dev.off()
+
+
+
+
+
+
+
+
 
 
 
@@ -578,7 +704,7 @@ dev.off()
 #indiv$bs.end.std[indiv$population %in% "Maio"] <- scale(indiv$bs.end[indiv$population %in% "Maio"])
 
 library(plyr)
-indiv$year<-substr(indiv$year.ring, 0,4)
+#indiv$year<-substr(indiv$year.ring, 0,4)
 indiv$pop.year <- paste(indiv$population, indiv$year, sep="-")
 indiv<-ddply(indiv, c("pop.year"), transform, bs.start.std= scale(bs.start))
 indiv<-ddply(indiv, c("pop.year"), transform, bs.end.std=scale(bs.end))
@@ -587,270 +713,257 @@ names(indiv)
 hist(indiv$bs.end.std[indiv$population %in% "Ceuta"])
 hist(indiv$bs.start.std[indiv$population %in% "Ceuta"])
 
-hist(indiv$bs.start.std[indiv$pop.year %in% "Maio-2015"])
+hist(indiv$bs.start.std[indiv$population %in% "Tuzla"])
+hist(indiv$bs.end.std[indiv$population %in% "Tuzla"])
+
+hist(indiv$bs.start.std[indiv$population %in% "Maio"])
+hist(indiv$bs.end.std[indiv$population %in% "Maio"])
 
 
 #restrict sample again:
 #Mol sex
 ind<-which(indiv$year.cr < indiv$year)
 ringed.prev3<-indiv[ind,]
-str(ringed.prev3) #654
+str(ringed.prev3) #1357
 
-ringed.prev3<-ringed.prev3[!is.na(ringed.prev3$mol_sex_focal),] #only indiv with mol_sex
-ringed.prev3$pop.molsex <- paste(ringed.prev3$population, ringed.prev3$mol_sex_focal, sep="-")
-unique(ringed.prev3$pop.molsex)
-ringed.prev3$pop.molsex<-factor(ringed.prev3$pop.molsex)
+ringed.prev3$pop.sp.sex<-ifelse(ringed.prev3$population %in% "Tuzla", 
+                               paste(ringed.prev3$population, ringed.prev3$species, ringed.prev3$field_sex_focal, sep="-"),
+                               paste(ringed.prev3$population, ringed.prev3$species, ringed.prev3$mol_sex_focal, sep="-"))
 
-#field sex
-ringed.prev4<-indiv[ind,]
-ringed.prev4$pop.fieldsex <- paste(ringed.prev4$population, ringed.prev4$field_sex_focal, sep="-")
-ringed.prev4$pop.fieldsex <- factor(ringed.prev4$pop.fieldsex)
+table(ringed.prev3$pop.sp.sex)
 
-table(ringed.prev4$pop.fieldsex)
-# Ceuta-F Ceuta-M  Maio-F  Maio-M 
-# 88     166     214     186 
+factors.pop.sp.sex<-factor(ringed.prev3$pop.sp.sex)
+factors.wanted<-levels(factors.pop.sp.sex)[c(3,4,20,21,10,11,16,17,13,14,7,8)]
 
-#BOXPLOT
-max(ringed.prev4$bs.start.std)
+plot.data<-ringed.prev3[ringed.prev3$pop.sp.sex %in% factors.wanted,]
+plot.data$pop.sp.sex<-factor(plot.data$pop.sp.sex)
+plot.data$pop.sp.sex<-factor(plot.data$pop.sp.sex,levels(plot.data$pop.sp.sex)[c(1,2,11,12,5,6,9,10,7,8,3,4)])
 
-dev.off()
-setwd("F:/Plovers/3rd Chapter/Exploratory results/plots")
-tiff("bsstart_fieldsex.tiff", width=200, height=120, units="mm", res=500)
-par(mfcol=c(1,2), #fill out by columns instead of mfrow
-    cex=0.6,
-    oma=c(1.5,2,1,1),
-    mgp=c(2,0.6,0),
-    tcl=-0.25)
-boxplot(ringed.prev4$bs.start.std~ringed.prev4$pop.fieldsex, 
-        horizontal=T,
-        ylim=c(-3.0,3.5),
-        names = c("", "", "", ""),
-        ylab="",                  
-        at =c(1,2, 4,5), #specify position of each boxplot on x
-        par(mar = c(6, 4, 2, 0.5)+ 0.1),    #enlarge plot's window default is c(5, 4, 4, 2) + 0.1.
-        par(cex.lab=0.75), 
-        par(cex.axis=0.7), 
-        yaxt='n',
-        xaxt="n",
-        boxwex=0.5, outwex=0.5,
-        outcex=0.5)                                                                                                                    
-                                                                                               
-y<-seq(-3.0,3.5, 1)
-axis(1, at=y,las=1, cex.axis=0.7) 
+print(levels(plot.data$pop.sp.sex))
 
-mtext("Breeding schedule start (standardized date)", side=1, line=2.5, cex=0.75)
-#mtext("schedules (days)", side=2, line=2, cex=0.75)
-mtext("Females", side=2, line=0.5, at=1, las=1,cex=0.6)
-mtext("Males", side=2, line=0.5, at=2, las=1, cex=0.6)
-mtext("Ceuta (SP)", side = 2, line = 4.0, at=1.5,cex = 0.75) 
-                                                                        
-      
-mtext("Females", side=2, line=0.5, at=4, las=1,cex=0.6)
-mtext("Males", side=2, line=0.5, at=5, las=1, cex=0.6)
-mtext("Maio (KP)", side = 2, line = 4.0, at=4.5,cex = 0.75)
+table(plot.data$pop.sp.sex)
 
-         
-boxplot(ringed.prev4$bs.end.std~ringed.prev4$pop.fieldsex, 
-        horizontal=T,
-        ylim=c(-3.0,3.5),
-        names = c("", "", "", ""),
-        ylab="",                  
-        at =c(1,2, 4,5), #specify position of each boxplot on x
-        par(mar = c(6, 0.5, 2, 2)+ 0.1),    #enlarge plot's area default is c(5, 4, 4, 2) + 0.1.
-        par(cex.lab=0.75), 
-        par(cex.axis=0.7), 
-        yaxt='n',
-        xaxt="n",
-        boxwex=0.5, outwex=0.5,
-        outcex=0.5)                                                                                                                    
+# Ceuta-SP-F       Ceuta-SP-M       Tuzla-KP-F       Tuzla-KP-M  Madagascar-MP-F  Madagascar-MP-M        Maio-KP-F 
+# 142              181              138              122               17               17              241 
+# Maio-KP-M Madagascar-WfP-F Madagascar-WfP-M Madagascar-KiP-F Madagascar-KiP-M 
+# 220               54               49               44               55 
 
-y<-seq(-3.0,3.5, 1)
-axis(1, at=y,las=1, cex.axis=0.7) 
 
-mtext("Breeding schedule end (standardized date)", side=1, line=2.5, cex=0.75)
-#add sample sizes on left
-mtext("88", side= 4, line = 0.5, at=1, las=1, cex=0.6)
-mtext("166", side =4, line = 0.5, at=2, las=1,cex=0.6)
-mtext("214", side=4, line=0.5, at=4, las=1,cex=0.6)
-mtext("186", side=4, line=0.5, at=5, las=1,cex=0.6)
-dev.off()
 
-#----------------------------------------------------------------
-#Violin plot
+# #BOXPLOT
+# max(ringed.prev4$bs.start.std)
+# 
+# dev.off()
+# setwd("F:/Plovers/3rd Chapter/Exploratory results/plots")
+# tiff("bsstart_fieldsex.tiff", width=200, height=120, units="mm", res=500)
+# par(mfcol=c(1,2), #fill out by columns instead of mfrow
+#     cex=0.6,
+#     oma=c(1.5,2,1,1),
+#     mgp=c(2,0.6,0),
+#     tcl=-0.25)
+# boxplot(ringed.prev4$bs.start.std~ringed.prev4$pop.fieldsex, 
+#         horizontal=T,
+#         ylim=c(-3.0,3.5),
+#         names = c("", "", "", ""),
+#         ylab="",                  
+#         at =c(1,2, 4,5), #specify position of each boxplot on x
+#         par(mar = c(6, 4, 2, 0.5)+ 0.1),    #enlarge plot's window default is c(5, 4, 4, 2) + 0.1.
+#         par(cex.lab=0.75), 
+#         par(cex.axis=0.7), 
+#         yaxt='n',
+#         xaxt="n",
+#         boxwex=0.5, outwex=0.5,
+#         outcex=0.5)                                                                                                                    
+#                                                                                                
+# y<-seq(-3.0,3.5, 1)
+# axis(1, at=y,las=1, cex.axis=0.7) 
+# 
+# mtext("Breeding schedule start (standardized date)", side=1, line=2.5, cex=0.75)
+# #mtext("schedules (days)", side=2, line=2, cex=0.75)
+# mtext("Females", side=2, line=0.5, at=1, las=1,cex=0.6)
+# mtext("Males", side=2, line=0.5, at=2, las=1, cex=0.6)
+# mtext("Ceuta (SP)", side = 2, line = 4.0, at=1.5,cex = 0.75) 
+#                                                                         
+#       
+# mtext("Females", side=2, line=0.5, at=4, las=1,cex=0.6)
+# mtext("Males", side=2, line=0.5, at=5, las=1, cex=0.6)
+# mtext("Maio (KP)", side = 2, line = 4.0, at=4.5,cex = 0.75)
+# 
+#          
+# boxplot(ringed.prev4$bs.end.std~ringed.prev4$pop.fieldsex, 
+#         horizontal=T,
+#         ylim=c(-3.0,3.5),
+#         names = c("", "", "", ""),
+#         ylab="",                  
+#         at =c(1,2, 4,5), #specify position of each boxplot on x
+#         par(mar = c(6, 0.5, 2, 2)+ 0.1),    #enlarge plot's area default is c(5, 4, 4, 2) + 0.1.
+#         par(cex.lab=0.75), 
+#         par(cex.axis=0.7), 
+#         yaxt='n',
+#         xaxt="n",
+#         boxwex=0.5, outwex=0.5,
+#         outcex=0.5)                                                                                                                    
+# 
+# y<-seq(-3.0,3.5, 1)
+# axis(1, at=y,las=1, cex.axis=0.7) 
+# 
+# mtext("Breeding schedule end (standardized date)", side=1, line=2.5, cex=0.75)
+# #add sample sizes on left
+# mtext("88", side= 4, line = 0.5, at=1, las=1, cex=0.6)
+# mtext("166", side =4, line = 0.5, at=2, las=1,cex=0.6)
+# mtext("214", side=4, line=0.5, at=4, las=1,cex=0.6)
+# mtext("186", side=4, line=0.5, at=5, las=1,cex=0.6)
+# dev.off()
+# 
+# #----------------------------------------------------------------
+# #Violin plot
 library(vioplot)
 
-vioplot(ringed.prev4$bs.start.std[ringed.prev4$pop.fieldsex %in% "Ceuta-F"],
-        ringed.prev4$bs.start.std[ringed.prev4$pop.fieldsex %in% "Ceuta-M"],
-        ringed.prev4$bs.start.std[ringed.prev4$pop.fieldsex %in% "Maio-F"],
-        ringed.prev4$bs.start.std[ringed.prev4$pop.fieldsex %in% "Maio-M"],
-        col="grey", horizontal=T, border="black", lty=1, lwd=1, rectCol="black", 
-        colMed="white", pchMed=19, add=FALSE, wex=1, 
-        drawRect=TRUE)
+setwd("F:/Plovers/3rd Chapter/Exploratory_results/plots")
+tiff("ringedprev_molsex(tuzla fieldsex)_start.tiff", width=100, height=150, units="mm", res=500)
+par(mfrow=c(1,1))
 
-#try with non std dates
-# ringed.prev4$origin.jd<-paste(ringed.prev4$year,"01-01", sep="-")
-# str(ringed.prev4$bs.start)
-# 
-# for(i in 1:length(ringed.prev4$year)){
-#   ringed.prev4$juliand.bsstart[i]<-julian(ringed.prev4$bs.start[i], origin=as.Date(ringed.prev4$origin.jd[i]))  
-# }
-# 
-# vioplot(ringed.prev4$juliand.bsstart[ringed.prev4$pop.fieldsex %in% "Ceuta-F"],
-#         ringed.prev4$juliand.bsstart[ringed.prev4$pop.fieldsex %in% "Ceuta-M"],
-#         ringed.prev4$juliand.bsstart[ringed.prev4$pop.fieldsex %in% "Maio-F"],
-#         ringed.prev4$juliand.bsstart[ringed.prev4$pop.fieldsex %in% "Maio-M"],
-#         col="grey", horizontal=T, border="black", lty=1, lwd=1, rectCol="black", 
-#         colMed="white", pchMed=19, add=FALSE, wex=1, 
-#         drawRect=TRUE)
+boxplot(plot.data$bs.start.std~plot.data$pop.sp.sex,
+                horizontal=T,
+                ylim=c(-3.0,3.5),
+                names = c("", "", "", "","","","","","","","",""),
+                ylab="",
+        at =c(1,2, 4,5, 7,8, 10,11, 13,14, 16,17), #specify position of each boxplot on x
+                par(mar = c(5, 4, 4, 2)+ 0.1),    #enlarge plot's area default is c(5, 4, 4, 2) + 0.1.
+                par(cex.lab=0.75),
+                par(cex.axis=0.7),
+                yaxt='n',
+                xaxt="n",
+                type="n",
+                boxwex=0.5, outwex=0.5,
+                outcex=0.5, border="white")
+y<-seq(-3.0,3.5, 1)
+axis(1, at=y,las=1, cex.axis=0.7)
+x<-c(1,2, 4,5, 7,8, 10,11, 13,14, 16,17)
+axis(2, at=x, las=1, cex.axis=0.7, labels=c("","","","","","","","","","","",""))
 
-#-----
-vioplot(ringed.prev4$bs.end.std[ringed.prev4$pop.fieldsex %in% "Ceuta-F"],
-        ringed.prev4$bs.end.std[ringed.prev4$pop.fieldsex %in% "Ceuta-M"],
-        ringed.prev4$bs.end.std[ringed.prev4$pop.fieldsex %in% "Maio-F"],
-        ringed.prev4$bs.end.std[ringed.prev4$pop.fieldsex %in% "Maio-M"],
-        col="grey", horizontal=T, border="black", lty=1, lwd=1, rectCol="black", 
-         colMed="white", pchMed=19, add=FALSE, wex=1, 
-         drawRect=TRUE)
+vioplot(ringed.prev3$bs.start.std[ringed.prev3$pop.sp.sex %in% "Ceuta-SP-F"],
+        ringed.prev3$bs.start.std[ringed.prev3$pop.sp.sex %in% "Ceuta-SP-M"],
+        ringed.prev3$bs.start.std[ringed.prev3$pop.sp.sex %in% "Tuzla-KP-F"],
+        ringed.prev3$bs.start.std[ringed.prev3$pop.sp.sex %in% "Tuzla-KP-M"],
+        ringed.prev3$bs.start.std[ringed.prev3$pop.sp.sex %in% "Madagascar-MP-F"],
+        ringed.prev3$bs.start.std[ringed.prev3$pop.sp.sex %in% "Madagascar-MP-M"],
+        ringed.prev3$bs.start.std[ringed.prev3$pop.sp.sex %in% "Maio-KP-F"],
+        ringed.prev3$bs.start.std[ringed.prev3$pop.sp.sex %in% "Maio-KP-M"],
+        ringed.prev3$bs.start.std[ringed.prev3$pop.sp.sex %in% "Madagascar-WfP-F"],
+        ringed.prev3$bs.start.std[ringed.prev3$pop.sp.sex %in% "Madagascar-WfP-M"],
+        ringed.prev3$bs.start.std[ringed.prev3$pop.sp.sex %in% "Madagascar-KiP-F"],
+        ringed.prev3$bs.start.std[ringed.prev3$pop.sp.sex %in% "Madagascar-KiP-M"],
+        at =c(1,2, 4,5, 7,8, 10,11, 13,14, 16,17),
+        names=c("","","","","","","","","","","",""),
+        col="white", horizontal=T, #border="black",
+        lty=1, lwd=1, #rectCol="black", 
+        colMed="black", pchMed=20, add=T, wex=1, 
+        drawRect=TRUE, cex=0.6)
+mtext("Start of breeding shcedule (Standardized date)", side=1, line=1.8, cex=0.75)
+#mtext("schedules (days)", side=2, line=2, cex=0.75)
+mtext("F", side=2, line=0.7, at=1, las=1,cex=0.6)
+mtext("M", side=2, line=0.7, at=2, las=1, cex=0.6)
+mtext("Ceuta (SP)", side = 2, line = 1.5,at=1.5, cex = 0.50, adj=1,las=1)
 
+mtext("F", side=2, line=0.7, at=4, las=1,cex=0.6)
+mtext("M", side=2, line=0.7, at=5, las=1, cex=0.6)
+mtext("Tuzla (KP)", side = 2, line = 1.5,at=4.5, cex = 0.50,adj=1,las=1)
+
+mtext("F", side=2, line=0.7, at=7, las=1,cex=0.6)
+mtext("M", side=2, line=0.7, at=8, las=1, cex=0.6)
+mtext("Mad (MP)", side = 2, line = 1.5,at=7.5, cex = 0.50,adj=1,las=1)
+
+mtext("F", side=2, line=0.7, at=10, las=1,cex=0.6)
+mtext("M", side=2, line=0.7, at=11, las=1, cex=0.6)
+mtext("Maio (KP)", side = 2, line = 1.5,at=10.5, cex = 0.50,adj=1,las=1)
+
+mtext("F", side=2, line=0.7, at=13, las=1,cex=0.6)
+mtext("M", side=2, line=0.7, at=14, las=1, cex=0.6)
+mtext("Mad (WfP)", side = 2, line = 1.5,at=13.5, cex = 0.50,adj=1, las=1)
+
+mtext("F", side=2, line=0.7, at=16, las=1,cex=0.6)
+mtext("M", side=2, line=0.7, at=17, las=1, cex=0.6)
+mtext("Mad (KiP)", side = 2, line = 1.5,at=16.5, cex = 0.50,adj=1, las=1)
+
+dev.off()
+#----------------------------
+#try with ggplot
+library(ggplot2)
+ggplot(plot.data, aes(x=pop.sp.sex, y=bs.start.std)) +
+  geom_violin(trim=FALSE, fill='#A4A4A4', color="darkred", orientation="horizontal")+
+  geom_boxplot(width=0.1) + theme_minimal()
+
+
+#--------------------------------
+#-----END.date
+setwd("F:/Plovers/3rd Chapter/Exploratory_results/plots")
+tiff("ringedprev_molsex(tuzla fieldsex)_end.tiff", width=100, height=150, units="mm", res=500)
+par(mfrow=c(1,1))
+
+boxplot(plot.data$bs.start.std~plot.data$pop.sp.sex,
+        horizontal=T,
+        ylim=c(-3.0,3.5),
+        names = c("", "", "", "","","","","","","","",""),
+        ylab="",
+        at =c(1,2, 4,5, 7,8, 10,11, 13,14, 16,17), #specify position of each boxplot on x
+        par(mar = c(5, 4, 4, 2)+ 0.1),    #enlarge plot's area default is c(5, 4, 4, 2) + 0.1.
+        par(cex.lab=0.75),
+        par(cex.axis=0.7),
+        yaxt='n',
+        xaxt="n",
+        type="n",
+        boxwex=0.5, outwex=0.5,
+        outcex=0.5, border="white")
+y<-seq(-3.0,3.5, 1)
+axis(1, at=y,las=1, cex.axis=0.7)
+x<-c(1,2, 4,5, 7,8, 10,11, 13,14, 16,17)
+axis(2, at=x, las=1, cex.axis=0.7, labels=c("","","","","","","","","","","",""))
+
+vioplot(ringed.prev3$bs.end.std[ringed.prev3$pop.sp.sex %in% "Ceuta-SP-F"],
+        ringed.prev3$bs.end.std[ringed.prev3$pop.sp.sex %in% "Ceuta-SP-M"],
+        ringed.prev3$bs.end.std[ringed.prev3$pop.sp.sex %in% "Tuzla-KP-F"],
+        ringed.prev3$bs.end.std[ringed.prev3$pop.sp.sex %in% "Tuzla-KP-M"],
+        ringed.prev3$bs.end.std[ringed.prev3$pop.sp.sex %in% "Madagascar-MP-F"],
+        ringed.prev3$bs.end.std[ringed.prev3$pop.sp.sex %in% "Madagascar-MP-M"],
+        ringed.prev3$bs.end.std[ringed.prev3$pop.sp.sex %in% "Maio-KP-F"],
+        ringed.prev3$bs.end.std[ringed.prev3$pop.sp.sex %in% "Maio-KP-M"],
+        ringed.prev3$bs.end.std[ringed.prev3$pop.sp.sex %in% "Madagascar-WfP-F"],
+        ringed.prev3$bs.end.std[ringed.prev3$pop.sp.sex %in% "Madagascar-WfP-M"],
+        ringed.prev3$bs.end.std[ringed.prev3$pop.sp.sex %in% "Madagascar-KiP-F"],
+        ringed.prev3$bs.end.std[ringed.prev3$pop.sp.sex %in% "Madagascar-KiP-M"],
+        at =c(1,2, 4,5, 7,8, 10,11, 13,14, 16,17),
+        names=c("","","","","","","","","","","",""),
+        col="white", horizontal=T, #border="black",
+        lty=1, lwd=1, #rectCol="black", 
+        colMed="black", pchMed=20, add=T, wex=1, 
+        drawRect=TRUE, cex=0.6)
+mtext("End of breeding shcedule (Standardized date)", side=1, line=1.8, cex=0.75)
+#mtext("schedules (days)", side=2, line=2, cex=0.75)
+mtext("F", side=2, line=0.7, at=1, las=1,cex=0.6)
+mtext("M", side=2, line=0.7, at=2, las=1, cex=0.6)
+mtext("Ceuta (SP)", side = 2, line = 1.5,at=1.5, cex = 0.50, adj=1,las=1)
+
+mtext("F", side=2, line=0.7, at=4, las=1,cex=0.6)
+mtext("M", side=2, line=0.7, at=5, las=1, cex=0.6)
+mtext("Tuzla (KP)", side = 2, line = 1.5,at=4.5, cex = 0.50,adj=1,las=1)
+
+mtext("F", side=2, line=0.7, at=7, las=1,cex=0.6)
+mtext("M", side=2, line=0.7, at=8, las=1, cex=0.6)
+mtext("Mad (MP)", side = 2, line = 1.5,at=7.5, cex = 0.50,adj=1,las=1)
+
+mtext("F", side=2, line=0.7, at=10, las=1,cex=0.6)
+mtext("M", side=2, line=0.7, at=11, las=1, cex=0.6)
+mtext("Maio (KP)", side = 2, line = 1.5,at=10.5, cex = 0.50,adj=1,las=1)
+
+mtext("F", side=2, line=0.7, at=13, las=1,cex=0.6)
+mtext("M", side=2, line=0.7, at=14, las=1, cex=0.6)
+mtext("Mad (WfP)", side = 2, line = 1.5,at=13.5, cex = 0.50,adj=1, las=1)
+
+mtext("F", side=2, line=0.7, at=16, las=1,cex=0.6)
+mtext("M", side=2, line=0.7, at=17, las=1, cex=0.6)
+mtext("Mad (KiP)", side = 2, line = 1.5,at=16.5, cex = 0.50,adj=1, las=1)
+
+dev.off()
 #---------------------------------------------------------------------------
 
-#Plot Means and sd or se?....better to plot CI
-
-se <- function(a) sd(a[!is.na(a)])/sqrt(length(a[!is.na(a)]))
-
-#length
-means.bslength <- aggregate(ringed.prev4$bs.length, by=list(ringed.prev4$pop.fieldsex), mean)
-se.bs <- aggregate(ringed.prev4$bs.length, by=list(ringed.prev4$pop.fieldsex), se)
-sd.bs <- aggregate(ringed.prev4$bs.length, by=list(ringed.prev4$pop.fieldsex), sd)
-n.bs <- aggregate(ringed.prev4$bs.length, by=list(ringed.prev4$pop.fieldsex), length)
-merge.bs <- merge(means.bslength, sd.bs, by=c("Group.1"))
-merge.bs2<-merge(merge.bs, se.bs, by=c("Group.1"))
-merge.bs3<-merge(merge.bs2,n.bs, by=c("Group.1"))
-colnames(merge.bs3) <- c("pop.sex","mean.bslength", "sd", "se", "n")
-
-merge.bs3$pop.sex <- as.numeric(merge.bs3$pop.sex)
-
-dev.off()
-plot(merge.bs3$pop.sex, merge.bs3$mean.bslength, 
-     ylim=c(0,100), 
-     xlim=c(1,4),
-     type="n")
-points(merge.bs3$pop.sex, merge.bs3$mean.bslength)
-arrows(merge.bs3$pop.sex, merge.bs3$mean.bslength-merge.bs3$sd, 
-       merge.bs3$pop.sex, merge.bs3$mean.bslength+merge.bs3$sd, 
-       angle = 90, #ASR CI
-       length=0.2,
-       col="black",
-       lty=1,
-       code=3)
-
-#bs.start
-#Calculate Confidence intervals for normal distribution
-error.ci <- function(x) (qnorm(0.975)*sd(x))/sqrt(length(x))
-#left <- a-error
-#right <- a+error
-
-#check if bs.start is normal? Yes in both Ceuta and Maio
-hist(ringed.prev4$bs.start.std[ringed.prev4$population %in% "Ceuta"])
-shapiro.test(ringed.prev4$bs.start.std[ringed.prev4$population %in% "Ceuta"])
-qqnorm(ringed.prev4$bs.start.std[ringed.prev4$population %in% "Ceuta"])
-qqline(ringed.prev4$bs.start.std[ringed.prev4$population %in% "Ceuta"],lty=2)   #If sample is normally distributed, then the line should be straight.
-
-hist(ringed.prev4$bs.start.std[ringed.prev4$population %in% "Maio"])
-shapiro.test(ringed.prev4$bs.start.std[ringed.prev4$population %in% "Maio"])
-qqnorm(ringed.prev4$bs.start.std[ringed.prev4$population %in% "Maio"])
-qqline(ringed.prev4$bs.start.std[ringed.prev4$population %in% "Maio"],lty=2)   #If sample is normally distributed, then the line should be straight.
-#-----
-
-#calculate mean, sd, se and CI95%
-means.bsstart <- aggregate(ringed.prev4$bs.start.std, by=list(ringed.prev4$pop.fieldsex), mean)
-se.bs <- aggregate(ringed.prev4$bs.start.std, by=list(ringed.prev4$pop.fieldsex), se)
-sd.bs <- aggregate(ringed.prev4$bs.start.std, by=list(ringed.prev4$pop.fieldsex), sd)
-n.bs <- aggregate(ringed.prev4$bs.start.std, by=list(ringed.prev4$pop.fieldsex), length)
-error.ci95<-aggregate(ringed.prev4$bs.start.std, by=list(ringed.prev4$pop.fieldsex), error.ci)
-upper.ci <- means.bsstart$x+error.ci95$x
-lower.ci <- means.bsstart$x-error.ci95$x
-merge.bs.start <- merge(means.bsstart, sd.bs, by=c("Group.1"))
-merge.bs2.start<-merge(merge.bs.start, se.bs, by=c("Group.1"))
-merge.bs3.start<-merge(merge.bs2.start,n.bs, by=c("Group.1"))
-
-
-colnames(merge.bs3.start) <- c("pop.sex","mean.bsstart", "sd", "se", "n")
-
-#add confidence intervals to dataframe
-merge.bs4.start<-cbind(merge.bs3.start,upper.ci,lower.ci)
-
-merge.bs4.start$pop.sex <- as.numeric(merge.bs4.start$pop.sex)
-
-
-
-
-dev.off()
-plot(merge.bs4.start$pop.sex, merge.bs4.start$mean.bsstart, 
-     ylim=c(-1,1.0), 
-     xlim=c(1,4),
-     type="n")
-points(merge.bs4.start$pop.sex, merge.bs4.start$mean.bsstart)
-arrows(merge.bs4.start$pop.sex, merge.bs4.start$upper.ci, 
-       merge.bs4.start$pop.sex, merge.bs4.start$lower.ci, 
-       angle = 90, #ASR CI
-       length=0.2,
-       col="black",
-       lty=1,
-       code=3)
-
-#---------------------------------
-#bs.end
-#Calculate Confidence intervals for normal distribution
-error.ci <- function(x) (qnorm(0.975)*sd(x))/sqrt(length(x))
-#left <- a-error
-#right <- a+error
-
-#check if bs.start is normal? Yes in both Ceuta and Maio
-hist(ringed.prev4$bs.end.std[ringed.prev4$population %in% "Ceuta"])
-shapiro.test(ringed.prev4$bs.end.std[ringed.prev4$population %in% "Ceuta"])
-qqnorm(ringed.prev4$bs.end.std[ringed.prev4$population %in% "Ceuta"])
-qqline(ringed.prev4$bs.end.std[ringed.prev4$population %in% "Ceuta"],lty=2)   #If sample is normally distributed, then the line should be straight.
-
-hist(ringed.prev4$bs.end.std[ringed.prev4$population %in% "Maio"])
-shapiro.test(ringed.prev4$bs.end.std[ringed.prev4$population %in% "Maio"])
-qqnorm(ringed.prev4$bs.end.std[ringed.prev4$population %in% "Maio"])
-qqline(ringed.prev4$bs.end.std[ringed.prev4$population %in% "Maio"],lty=2)   #If sample is normally distributed, then the line should be straight.
-#-----
-
-#calculate mean, sd, se and CI95%
-means.bsend <- aggregate(ringed.prev4$bs.end.std, by=list(ringed.prev4$pop.fieldsex), mean)
-se.bs <- aggregate(ringed.prev4$bs.end.std, by=list(ringed.prev4$pop.fieldsex), se)
-sd.bs <- aggregate(ringed.prev4$bs.end.std, by=list(ringed.prev4$pop.fieldsex), sd)
-n.bs <- aggregate(ringed.prev4$bs.end.std, by=list(ringed.prev4$pop.fieldsex), length)
-error.ci95<-aggregate(ringed.prev4$bs.end.std, by=list(ringed.prev4$pop.fieldsex), error.ci)
-upper.ci <- means.bsend$V1+error.ci95$V1
-lower.ci <- means.bsend$V1-error.ci95$V1
-merge.bs.end <- merge(means.bsend, sd.bs, by=c("Group.1"))
-merge.bs2.end<-merge(merge.bs.end, se.bs, by=c("Group.1"))
-merge.bs3.end<-merge(merge.bs2.end,n.bs, by=c("Group.1"))
-
-
-colnames(merge.bs3.end) <- c("pop.sex","mean.bsend", "sd", "se", "n")
-
-#add confidence intervals to dataframe
-merge.bs4.end<-cbind(merge.bs3.end,upper.ci,lower.ci)
-
-merge.bs4.end$pop.sex <- as.numeric(merge.bs4.end$pop.sex)
-
-
-
-
-dev.off()
-plot(merge.bs4.end$pop.sex, merge.bs4.end$mean.bsend, 
-     ylim=c(-1,1.0), 
-     xlim=c(1,4),
-     type="n")
-points(merge.bs4.end$pop.sex, merge.bs4.end$mean.bsend)
-arrows(merge.bs4.end$pop.sex, merge.bs4.end$upper.ci, 
-       merge.bs4.end$pop.sex, merge.bs4.end$lower.ci, 
-       angle = 90, #ASR CI
-       length=0.2,
-       col="black",
-       lty=1,
-       code=3)
