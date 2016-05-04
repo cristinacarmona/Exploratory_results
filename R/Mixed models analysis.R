@@ -60,14 +60,36 @@ indiv$ms <- ifelse(indiv$pop.sp %in% c("Ceuta-SP", "Tuzla-KP", "Madagascar-KiP")
 
 males.mol<-indiv[grep(indiv$pop.sp.sex, pattern="M$"),]
 females.mol<-indiv[grep(indiv$pop.sp.sex, pattern="F$"),]
+
 both<-rbind(males.mol, females.mol)
 
 both$sex <- as.factor(both$sex)
 
-#_-------------------------------------------------------------------------------------
-# Breeding Schedule length
+#restrict to individuals ringed one year before focal year:
+names(both)
+length(both$year) #4215
+
+both.original<-both
+
+both1<-both[both$year != both$year.cr,]
+length(both1$year) #1371
+
+#------------------------------------------------------------------------------
+#------------------------------------------------------------------------------
+#------------------------------------------------------------------------------
+#Breeding Schedule length------------------------------
+#------------------------------------------------------------------------------
+#------------------------------------------------------------------------------
+
 #1. Data structure:--------
-  #a) Histograms:---------------
+both<-both1
+summary(both$corrected.bs.length.std)
+summary(both$bs.start.std)
+both$corrected.bs.length.std.plus3<-both$corrected.bs.length.std + 3.3518
+both$bs.start.std.plus7 <- both$bs.start.std + 7.071000
+summary(both$bs.start.std.plus7) 
+
+ #a) Histograms:---------------
 hist(indiv$corrected.bs.length.std)
 table(indiv$bs.length.std)
 
@@ -81,13 +103,6 @@ qqp(both$corrected.bs.length.std.plus3, "lnorm") #needs newer version of R
 #see: http://ase.tufts.edu/gsc/gradresources/guidetomixedmodelsinr/mixed%20model%20guide.html
 
 #norm dist?
-
-summary(both$corrected.bs.length.std)
-summary(both$bs.start.std)
-both$corrected.bs.length.std.plus3<-both$corrected.bs.length.std + 3.3518
-both$bs.start.std.plus7 <- both$bs.start.std + 7.071000
-summary(both$bs.start.std.plus7)
-
 qqp(both$corrected.bs.length.std, "norm")
 qqp(both$corrected.bs.length.std.plus3)
 both[is.na(both$corrected.bs.length.std.plus3),]
@@ -108,12 +123,8 @@ ks.test(indiv$corrected.bs.length.std, pnorm)
 #2. Explore relations:------------
 attach(indiv)
 names(indiv)
-indiv$year<- as.factor(indiv$year)
-indiv$pop.sp<-as.factor(indiv$pop.sp)
-indiv$ms<-as.factor(indiv$ms)
 
-pairs(~ bs.start.std + bs.end.std + bs.length+total.nests.peryear, data=females.mol, panel=panel.smooth)
-pairs(~ bs.start.std + bs.end.std + bs.length+total.nests.peryear, data=males.mol, panel=panel.smooth)
+pairs(~ bs.start.std + bs.end.std + bs.length+total.nests.peryear, data=both, panel=panel.smooth)
 
 
 #3. Try Mixed models
@@ -127,7 +138,7 @@ both$ms <- as.factor(both$ms)
 both$population<-as.factor(both$population)
 
 library(ggplot2)
-ggplot(both[both$species %in% "KiP",],aes(x=bs.start.std,y=corrected.bs.length.std.plus3))+geom_point(aes(colour=sex))+
+ggplot(both[both$species %in% "KP",],aes(x=bs.start.std,y=corrected.bs.length.std.plus3))+geom_point(aes(colour=sex))+
   geom_line(aes(group=id),alpha=0.3)+scale_y_log10() #from http://stats.stackexchange.com/questions/64555/providing-starting-values-for-a-generalized-linear-mixed-model-with-glmmpql
    #explore repetitions per species, all seem to have several repeated breeding events
 
@@ -158,14 +169,14 @@ anova(mm5, mm2)
 anova(mm5, mm4)#same as species/id, still random effects  ~1|species/id is better
 AIC(mm.reml,mm2,mm4,mm6,mm5)
 # df      AIC
-# mm.reml 23 10083.03
-# mm2     24 10081.13
-# mm4     24 10078.72 #BEST MODEL
-# mm6     25 10081.19
-# mm5     24 10081.13
+# mm.reml 23 3167.611
+# mm2     24 3168.178
+# mm4     24 3167.979
+# mm6     25 3169.979
+# mm5     24 3168.178
 
 #Model with random effects defined: (mm.r)
-mm.r<-lme(corrected.bs.length.std ~ bs.start.std + total.nests.peryear + sex+  ms + ms:sex + year, random = ~1|population/id, method="ML", na.action=na.omit, data=both)
+mm.r<-lme(corrected.bs.length.std ~ bs.start.std + total.nests.peryear + sex+  ms + ms:sex + year, random = ~1|id, method="ML", na.action=na.omit, data=both)
 
 summary(mm.r)
 c<-coef(mm.r)
@@ -183,7 +194,6 @@ head(c)
 #another way of testing this: #assumption: distribution of residuals is normal
 m<-mm.r
 par(mfrow=c(1,1))
-m<-mm1
 sresid<-residuals(m)
 plot(fitted(m), sresid, xlab = "Fitted Values", ylab = "Residuals")
 abline(h = 0, lty = 2)
@@ -228,12 +238,12 @@ summary(mm6)
 mm7<-update(mm6, .~. -ms, .)
 anova(mm6,mm7)
 summary(m)
-mm8 <- update(mm6, .~. -sex,.)
-anova(mm6,mm8)
-mm9<- update(mm6, .~. - total.nests.peryear)
-anova(mm6,mm9)
-mm10<-update(mm6, .~. - bs.start.std,.)
-anova(mm6,mm10)
+mm8 <- update(mm7, .~. -sex,.)
+anova(mm7,mm8)
+mm9<- update(mm7, .~. - total.nests.peryear)
+anova(mm7,mm9)
+mm10<-update(mm7, .~. - bs.start.std,.)
+anova(mm7,mm10)
 summary(mm7)
 
 mm11<-update(m, .~. -year,.)
@@ -244,3 +254,57 @@ c<-coef(mm11)
 head(c)
 ci<-confint(mm11)
 ci[[2]]
+
+
+#-------model validation (based on Thomas, Vaughan and Lello book): and Pinhero and Bates book for mixed models
+#another way of testing this: #assumption: distribution of residuals is normal
+m<-mm11
+par(mfrow=c(2,3), pty="s")
+#m<-mm1
+sresid<-residuals(m)
+plot(fitted(m), sresid, xlab = "Fitted Values", ylab = "Residuals")
+abline(h = 0, lty = 2)
+lines(smooth.spline(fitted(m), residuals(m)), col="red") #Model-checking plots show that the residuals are well behaved if the red line is horizontal
+rownames(both)<- 1:length(both$X)
+text(fitted(m),residuals(m),labels=rownames(both)) #rows 1586, 3434 and 3157 are the problematic ones 
+text(fitted(m),residuals(m),labels=both$id)
+
+#check problematic rows to see potential errors?
+both[c(1586,3434,3157),]
+
+qqp(residuals(m))
+
+#Test assumption of constant variance across groups:
+#boxplot of residuals by group 
+
+plot(m, id~resid(.), abline=0) #errors should be centered at 0 - constant variance across groups
+plot(m, species~resid(.), abline=0)
+plot(m, population~resid(.), abline=0)
+
+plot(m, residuals.lme(., type="normalized") ~ fitted(.) | species, id=0.05, adj=-0.3)
+plot(m, residuals.lme(., type="normalized") ~ fitted(.) | population, id=0.05, adj=-0.3)
+
+qqnorm(m, ~resid(.)|population) #and the errors are reasonably close to normally distributed in all species
+plot(m, corrected.bs.length.std~fitted(.)) #The response variable is a reasonably linear function of the fitted values
+
+#plot residuals versus each x-variable
+plot(sresid~both$bs.start.std)
+plot(sresid~both$total.nests.peryear)
+plot(sresid~both$ms)
+plot(sresid~both$sex)
+
+
+
+#------------------------------------------------------------------------------
+#------------------------------------------------------------------------------
+#------------------------------------------------------------------------------
+#Start of Breeding schedule-----------------------
+#------------------------------------------------------------------------------
+#------------------------------------------------------------------------------
+names(both)
+
+
+
+
+
+
