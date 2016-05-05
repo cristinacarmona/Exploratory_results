@@ -1,4 +1,4 @@
-#Analysing breeding schedules (bs) data from Ceuta, Maio, Tuzla and Mad
+#Analysing breeding schedule length (bs) data from Ceuta, Maio, Tuzla and Mad
 #20/04/2016
 #by Cristina Carmona-Isunza
 
@@ -92,11 +92,11 @@ both1<-both.av[both.av$year > both.av$year.cr,]
 length(which(!is.na(both1$year))) #1445 but there were NAs insterted....so total 1357
 unique(both1$pop.year)
 table(both1$pop.year)
-# . Years used:
-#   ??? Ceuta 2007-2012
-# ??? Madagascar 2012-2015, 2010
-# ??? Maio 2008-2015
-# ??? Tuzla 1997-2000,2004
+#  Years used:
+#  Ceuta 2007-2012
+#  Madagascar 2012-2015, 2010
+#  Maio 2008-2015
+# Tuzla 1997-2000,2004
 # 
 # Ceuta-2007      Ceuta-2008      Ceuta-2009      Ceuta-2010      Ceuta-2011 
 # 91              53              73              65              43 
@@ -163,6 +163,8 @@ names(indiv)
 
 pairs(~ bs.start.std + bs.end.std + bs.length+total.nests.peryear, data=both, panel=panel.smooth)
 
+boxplot(bs.length.std~interaction(sex.available, ms),data=both,
+        ylab="Std length of breeding schedule")
 
 #3. Try Mixed models
 #explore random data structure
@@ -346,11 +348,11 @@ length(which(!is.na(both2$year))) #1265
 
 unique(both2$pop.year)
 table(both2$pop.year)
-# . Years used:
-#   ??? Ceuta 2007-2012
-# ??? Madagascar 2012-2015, 2010
-# ??? Maio 2008-2015
-# ??? Tuzla 1997-2000,2004
+#  Years used:
+#    Ceuta 2007-2012
+#  Madagascar 2012-2015, 2010
+#  Maio 2008-2015
+#  Tuzla 1997-2000,2004
 # Ceuta-2007      Ceuta-2008      Ceuta-2009      Ceuta-2010      Ceuta-2011 
 # 71              48              69              64              43 
 # Ceuta-2012 Madagascar-2010 Madagascar-2012 Madagascar-2013 Madagascar-2014 

@@ -87,3 +87,59 @@ both1<-both.av[both.av$year > both.av$year.cr,]
 length(which(!is.na(both1$year))) #1445 but there were NAs insterted....so total 1357
 unique(both1$pop.year)
 table(both1$pop.year)
+
+#------------------------------------------------------------------------------
+#------------------------------------------------------------------------------
+#------------------------------------------------------------------------------
+#Breeding Schedule start------------------------------
+#------------------------------------------------------------------------------
+#------------------------------------------------------------------------------
+
+#1. Data structure:--------
+both<-both1
+summary(both$bs.start.std)
+both$bs.start.std.plus7 <- both$bs.start.std + 4
+summary(both$bs.start.std.plus7) 
+
+summary(both$bs.end.std)
+both$bs.end.std.plus5<-both$bs.end.std + 5
+summary(both$bs.end.std.plus5)
+
+#a) Histograms:---------------
+hist(both$bs.start.std)
+hist(both$bs.end.std)
+
+
+require(MASS)
+library(car)
+qqnorm(both$bs.start.std)
+qqline(both$bs.start.std,lty=2)
+
+#outliers?
+boxplot(both$bs.start.std)
+indiv
+
+#log norm dist?
+qqp(both$bs.start.std.plus7, "lnorm") #needs newer version of R
+#see: http://ase.tufts.edu/gsc/gradresources/guidetomixedmodelsinr/mixed%20model%20guide.html
+
+#norm dist?
+qqp(both$bs.start.std, "norm")
+
+
+#b) Normality----------
+shapiro.test(both$bs.start.std)
+ks.test(both$bs.start.std, pnorm)
+
+
+#2. Explore relations:------------
+pairs(~ bs.start.std + bs.end.std + bs.length+total.nests.peryear + ms, data=both, panel=panel.smooth)
+boxplot(bs.start.std~ms, data=both)
+boxplot(bs.start.std~interaction(sex.available,ms), data=both)
+
+
+
+
+boxplot(bs.end.std~interaction(sex.available, ms), data=both)
+
+
