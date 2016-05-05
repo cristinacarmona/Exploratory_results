@@ -6,6 +6,10 @@
 #2nd log - 21/04/2016 Explore relations
 #3rd log - 22/04/2016 Explore problems in models as some coef are not calculated because of singularities
 #4th log - 26/04/2016 Establish best model: gaussian (after exploring gamma)
+#5th log - 27/04/2016 Used gaussian model...its better
+#6th log - 04/05/2016 Re-analysed data using available sex (fieldsex or molsex), subsetted data to use only individuals ringed the year previous to the focal year
+#7th log - 05/05/2016 Ran analysis using fieldsex for Tuzla and molsex for the rest of the pops, results are different...
+
 #-----------------------------------------------
 #------------import files--------------------
 setwd("F:/Plovers/3rd Chapter/Exploratory_results/output")
@@ -85,7 +89,25 @@ length(both.av$year) #4464
 
 #USE available sex FIRST 04/05/2016
 both1<-both.av[both.av$year > both.av$year.cr,]
-length(both1$year) #1445
+length(which(!is.na(both1$year))) #1445 but there were NAs insterted....so total 1357
+unique(both1$pop.year)
+table(both1$pop.year)
+# . Years used:
+#   ??? Ceuta 2007-2012
+# ??? Madagascar 2012-2015, 2010
+# ??? Maio 2008-2015
+# ??? Tuzla 1997-2000,2004
+# 
+# Ceuta-2007      Ceuta-2008      Ceuta-2009      Ceuta-2010      Ceuta-2011 
+# 91              53              73              65              43 
+# Ceuta-2012 Madagascar-2010 Madagascar-2012 Madagascar-2013 Madagascar-2014 
+# 28               3              10              56              55 
+# Madagascar-2015       Maio-2008       Maio-2009       Maio-2010       Maio-2011 
+# 147              15              34              57               9 
+# Maio-2012       Maio-2013       Maio-2014       Maio-2015      Tuzla-1997 
+# 66              92              93             107              79 
+# Tuzla-1998      Tuzla-1999      Tuzla-2000      Tuzla-2004 
+# 48             100              21              12 
 
 #------------------------------------------------------------------------------
 #------------------------------------------------------------------------------
@@ -152,6 +174,7 @@ both$species<-as.factor(both$species)
 both$ms <- as.factor(both$ms)
 both$population<-as.factor(both$population)
 both$sex.available<-as.factor(both$sex.available)
+
 
 library(ggplot2)
 ggplot(both[both$species %in% "KP",],aes(x=bs.start.std,y=corrected.bs.length.std.plus3))+geom_point(aes(colour=sex.available))+
@@ -307,17 +330,147 @@ plot(sresid~both$ms[which(!is.na(both$ms))])
 plot(sresid~both$sex.available[which(!is.na(both$sex.available))])
 length(which(!is.na(both$ms)))
 
+both.sex.av<-both
 
 #------------------------------------------------------------------------------
 #------------------------------------------------------------------------------
 #------------------------------------------------------------------------------
-#Start of Breeding schedule-----------------------
+#Run models with mol sex only and without conflicting sex individuals----------
 #------------------------------------------------------------------------------
 #------------------------------------------------------------------------------
-names(both)
+
+#USE molecular sex next 05/05/2016 and omit individuals with conflicting sex
+both2<-both.mol[both.mol$year > both.mol$year.cr & !both.mol$sex.reliable %in% "conflicting sex",]
+length(which(!is.na(both.mol$year))) #4215
+length(which(!is.na(both2$year))) #1265
+
+unique(both2$pop.year)
+table(both2$pop.year)
+# . Years used:
+#   ??? Ceuta 2007-2012
+# ??? Madagascar 2012-2015, 2010
+# ??? Maio 2008-2015
+# ??? Tuzla 1997-2000,2004
+# Ceuta-2007      Ceuta-2008      Ceuta-2009      Ceuta-2010      Ceuta-2011 
+# 71              48              69              64              43 
+# Ceuta-2012 Madagascar-2010 Madagascar-2012 Madagascar-2013 Madagascar-2014 
+# 28               2               9              47              43 
+# Madagascar-2015       Maio-2008       Maio-2009       Maio-2010       Maio-2011 
+# 126              14              34              54               9 
+# Maio-2012       Maio-2013       Maio-2014       Maio-2015      Tuzla-1997 
+# 64              88              89             103              79 
+# Tuzla-1998      Tuzla-1999      Tuzla-2000      Tuzla-2004 
+# 48             100              21              12 
+
+both<-both2
+both$id <- ifelse(is.na(both$ring), both$code, both$ring)
+both$id <- as.factor(both$id)
+both$year <- as.factor(both$year)
+both$species<-as.factor(both$species)
+both$ms <- as.factor(both$ms)
+both$population<-as.factor(both$population)
+both$sex<-as.factor(both$sex)
+
+library(lme4)
+library(nlme)
+
+#USING SEX.MOL (sex)
+mm1<-lme(corrected.bs.length.std ~ bs.start.std + total.nests.peryear + sex+  ms + ms:sex + year, random = ~1|id, method="ML", na.action=na.omit, data=both) #residual plot does not look good, needs change of error structure
+
+mm.reml<-update(mm1, method="REML")
 
 
+#model the random factors. Using stepwise deletions and REML-fitted models I found the optimal structure of the random component of the model: 
+mm2<-update(mm.reml, random=~1|species/id)
+anova(mm.reml,mm2)
+mm4<-update(mm.reml, random=~1|population/id) #simpler version of random effects is better ~1|species/id
+anova(mm.reml,mm4)
+anova(mm2,mm4)
+mm6<-update(mm.reml, random=~1|population/species/id)
+anova(mm.reml,mm6)
+anova(mm2,mm6)
+mm5<-update(mm.reml, random=~1|pop.sp/id) #blend pop & sp in one factor
+anova(mm5,mm.reml)
+anova(mm5, mm2)
+anova(mm5, mm4)#same as species/id, still random effects  ~1|species/id is better
+AIC(mm.reml,mm2,mm4,mm6,mm5)
 
 
+#Model with random effects defined: (mm.r)
+mm.r<-lme(corrected.bs.length.std ~ bs.start.std + total.nests.peryear + sex +ms + ms:sex+ year, random = ~1|id, method="ML", na.action=na.omit, data=both)
+
+summary(mm.r)
+c<-coef(mm.r)
+head(c)
+
+#-------model validation (based on Thomas, Vaughan and Lello book): and Pinhero and Bates book for mixed models
+#another way of testing this: #assumption: distribution of residuals is normal
+m<-mm.r
+par(mfrow=c(2,3))
+sresid<-residuals(m)
+plot(fitted(m), sresid, xlab = "Fitted Values", ylab = "Residuals")
+abline(h = 0, lty = 2)
+lines(smooth.spline(fitted(m), residuals(m)), col="red") #Model-checking plots show that the residuals are well behaved if the red line is horizontal
+rownames(both)<- 1:length(both$X)
+text(fitted(m),residuals(m),labels=rownames(both)) #rows 1586, 3434 and 3157 are the problematic ones 
+text(fitted(m),residuals(m),labels=both$id)
 
 
+qqp(residuals(m))
+
+#Test assumption of constant variance across groups:
+#boxplot of residuals by group 
+plot(m, id~resid(.), abline=0) #errors should be centered at 0 - constant variance across groups
+plot(m, species~resid(.), abline=0)
+plot(m, population~resid(.), abline=0)
+
+plot(m, residuals.lme(., type="normalized") ~ fitted(.) | species, id=0.05, adj=-0.3)
+plot(m, residuals.lme(., type="normalized") ~ fitted(.) | population, id=0.05, adj=-0.3)
+
+qqnorm(m, ~resid(.)|population) #and the errors are reasonably close to normally distributed in all species
+plot(m, corrected.bs.length.std~fitted(.)) #The response variable is a reasonably linear function of the fitted values
+
+#plot residuals versus each x-variable
+plot(sresid~both$bs.start.std[!is.na(both$bs.start.std)])
+plot(sresid~both$total.nests.peryear[!is.na(both$total.nests.peryear)])
+plot(sresid~both$ms[!is.na(both$ms)])
+plot(sresid~both$sex.available[!is.na(both$sex.available)])
+plot(sresid~both$year)
+
+#--------------Model selection------
+#selection of fixed terms has to be done using ML-fitted models and anova, test="F"
+m<-mm.r
+summary(m)
+mm5<-update(m, .~. -ms:sex, .) 
+anova(m,mm5) #use threshold of p<0.001 (Thomas, Vaughan & Lello, page 98)
+mm6<-update(mm5, .~. -year,.)
+anova(mm5,mm6)
+summary(mm6)
+mm7<-update(mm6, .~. -ms, .)
+anova(mm6,mm7)
+summary(m)
+mm8 <- update(mm6, .~. -sex,.)
+anova(mm6,mm8)
+mm9<- update(mm6, .~. - total.nests.peryear)
+anova(mm6,mm9)
+mm10<-update(mm6, .~. - bs.start.std,.)
+anova(mm6,mm10)
+summary(mm7)
+
+#mm11<-update(m, .~. -year,.)
+#anova(mm11, m)
+#summary(mm11)
+
+#final.model:
+summary(mm7)
+
+c<-coef(mm11)
+head(c)
+ci<-confint(mm11)
+ci[[2]]
+
+
+#-------model validation (based on Thomas, Vaughan and Lello book): and Pinhero and Bates book for mixed models
+#another way of testing this: #assumption: distribution of residuals is normal
+
+#Checked plots and look the same 
