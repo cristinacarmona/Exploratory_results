@@ -151,6 +151,26 @@ qqp(both$corrected.bs.length.std, "norm")
 qqp(both$corrected.bs.length.std.plus3)
 both[is.na(both$corrected.bs.length.std.plus3),]
 
+#outliers or mistaken data?
+plot(both$corrected.bs.length.std, type="n")
+rownames(both)<- 1:length(both$X)
+text(both$corrected.bs.length.std,labels=rownames(both)) #236, 304 882
+
+both[c(236,304,882),] #one has conflicting sex...the other two had no brood fate data...could delete them
+both.no.outliers<-both[-c(236,304,882),]
+plot(both.no.outliers$corrected.bs.length.std)
+qqp(both.no.outliers$corrected.bs.length.std, "norm")
+
+leverage<-function(x){1/length(x)+(x-mean(x))^2/sum((x-mean(x))^2)}
+a<-leverage(both$corrected.bs.length.std)
+summary(a)
+
+plot(leverage(both.no.outliers$corrected.bs.length.std),type="h")
+abline(0.0299,0,lty=2)
+points(leverage(both.no.outliers$corrected.bs.length.std))
+text(leverage(both.no.outliers$corrected.bs.length.std[a>0.008]),labels=rownames(both[a>0.008,]),
+     cex = 0.5)
+
 #gamma? gamma seems to do the best fit
 gamma <- fitdistr(both$corrected.bs.length.std.plus3, "gamma")
 qqp(both$corrected.bs.length.std.plus3, "gamma", shape = gamma$estimate[[1]], rate = gamma$estimate[[2]])
@@ -203,11 +223,12 @@ ggplot(both[both$species %in% "KP",],aes(x=bs.start.std,y=corrected.bs.length.st
 contrasts(both$population)
 
 #-----------------------
-library(lme4)
+#library(lme4)
 library(nlme)
 
 #USING SEX.AVAILABLE
-mm1<-lme(corrected.bs.length.std ~ bs.start.std + total.nests.peryear + sex.available+  ms + ms:sex.available + asr + asr:sex.available + asr:ms + year, random = ~1|id, method="ML", na.action=na.omit, data=both) #residual plot does not look good, needs change of error structure
+mm1<-lme(corrected.bs.length.std ~ bs.start.std + total.nests.peryear + sex.available+  asr:bs.start.std+ asr + asr:sex.available +asr:total.nests.peryear + year, random = ~1|id, method="ML", na.action=na.omit, data=both) #residual plot does not look good, needs change of error structure
+summary(mm1)
 
 mm.reml<-update(mm1, method="REML")
 
@@ -234,11 +255,12 @@ AIC(mm.reml,mm2,mm4,mm6,mm5)
 # mm5     22 3315.217
 
 #Model with random effects defined: (mm.r)
-mm.r<-lme(corrected.bs.length.std ~ bs.start.std + total.nests.peryear + sex.available +ms + ms:sex.available+ asr + asr:sex.available + asr:ms + year, random = ~1|id, method="ML", na.action=na.omit, data=both)
+mm.r<-lme(corrected.bs.length.std ~ bs.start.std + total.nests.peryear + sex.available + ms:sex.available +z.(asr)+ms + z.(asr):sex.available + z.(asr):ms + year, random = ~1|id, method="ML", na.action=na.omit, data=both)
 
 summary(mm.r)
 c<-coef(mm.r)
 head(c)
+vif.mer(mm.r) #see https://hlplab.wordpress.com/2011/02/24/diagnosing-collinearity-in-lme4/
 
 #-------model validation (based on Thomas, Vaughan and Lello book): and Pinhero and Bates book for mixed models
 #another way of testing this: #assumption: distribution of residuals is normal
@@ -252,8 +274,6 @@ rownames(both)<- 1:length(both$X)
 text(fitted(m),residuals(m),labels=rownames(both)) #rows 1586, 3434 and 3157 are the problematic ones 
 text(fitted(m),residuals(m),labels=both$id)
 
-      #check problematic rows to see potential errors?
-        both[c(1586,3434,3157),]
 
 qqp(residuals(m))
 

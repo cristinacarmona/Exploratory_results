@@ -65,6 +65,14 @@ indiv[ind,]
 
 #Monogamous and polygamous pops
 indiv$ms <- ifelse(indiv$pop.sp %in% c("Ceuta-SP", "Tuzla-KP", "Madagascar-KiP"), "Pol", "Mon")
+indiv$asr[indiv$pop.sp %in% "Ceuta-SP"]<- 0.608
+indiv$asr[indiv$pop.sp %in% "Tuzla-KP"]<-0.585
+indiv$asr[indiv$pop.sp %in% "Madagascar-MP"]<-0.421
+indiv$asr[indiv$pop.sp %in% "Maio-KP"]<-0.469
+indiv$asr[indiv$pop.sp %in% "Madagascar-WfP"]<-0.429
+indiv$asr[indiv$pop.sp %in% "Madagascar-KiP"]<-0.386
+
+
 
 males.mol<-indiv[indiv$sex %in% "M",]
 females.mol<-indiv[indiv$sex %in% "F",]
