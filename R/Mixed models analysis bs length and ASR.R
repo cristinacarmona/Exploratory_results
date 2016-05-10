@@ -11,6 +11,7 @@
 #7th log - 05/05/2016 Ran analysis using fieldsex for Tuzla and molsex for the rest of the pops, results are different...
 
 #8th log - 06/05/2016 Add ASR estimates Luke sent
+#9th log - 09/05/2016 Created plots to explore differences
 #-----------------------------------------------
 #------------import files--------------------
 setwd("F:/Plovers/3rd Chapter/Exploratory_results/output")
@@ -202,6 +203,42 @@ boxplot(bs.length.std~interaction(sex.available,asr), data=both)
 interaction.plot(both$asr, both$sex.available, both$bs.length.std, type="b")
 interaction.plot(both$asr, both$ms, both$bs.length.std, type="b")
 interaction.plot(both$asr, paste(both$ms, both$sex.available), both$bs.length.std, type="b")
+
+#plot Confidence intervals for means per population:
+both$asr.sex.ms<-paste(both$asr, both$sex.available,both$ms, sep="-")
+mean.bs.length<-aggregate(both$corrected.bs.length.std, by=list(both$asr.sex.ms), mean)
+n<-aggregate(both$corrected.bs.length.std, by=list(both$asr.sex.ms), length)
+sd<-aggregate(both$corrected.bs.length.std, by=list(both$asr.sex.ms), sd)
+
+left.ci<-mean.bs.length$x-((qnorm(0.975)*sd$x)/(sqrt(n$x)))
+right.ci<-mean.bs.length$x+((qnorm(0.975)*sd$x)/(sqrt(n$x)))
+
+means<-cbind(mean.bs.length, n, sd, left.ci,right.ci)
+means<-means[,c(1,2,4,6,7,8)]
+colnames(means)<-c("group","mean","n","sd","lower.ci.length","upper.ci.length")
+means$asr<-c(0.386,0.386,0.421,0.421,0.429,0.429,0.469,0.469,0.585,0.585,0.608,0.608)
+means$asr.lcl<-c(0.288,0.288,0.3384,0.3384,0.396,0.396,0.169,0.169,0.509, 0.509, 0.501,0.501)
+means$asr.ucl<-c(0.497,0.497,0.521,0.521,0.543,0.543,0.680,0.680,0.652,0.652,0.711,0.711)
+
+xy.error.bars<-function (x,y,xbar.u, xbar.l, ybar.u, ybar.l){
+  plot(x, y, pch=16, ylim=c(min(ybar.l),max(ybar.u)),
+       xlim=c(min(xbar.l),max(xbar.u)))
+  arrows(x, ybar.l, x, ybar.u, code=3, angle=90, length=0.1)
+  arrows(xbar.l, y, xbar.u, y, code=3, angle=90, length=0.1) }
+
+xy.error.bars(means$asr, means$mean, means$asr.ucl, means$asr.lcl, means$upper.ci.length,means$lower.ci.length)
+
+plot(means$asr, means$mean, pch=16, 
+     ylim=c(min(means$lower.ci.length),max(means$upper.ci.length))#,
+     #xlim=c(min(xbar.l),max(xbar.u)))
+)
+arrows(means$asr, means$lower.ci.length, means$asr, means$upper.ci.length, code=3, angle=90, length=0.1)
+
+#try kruskal.test for all groups...
+both$asr.sex.ms<-as.factor(both$asr.sex.ms)
+leveneTest(both$corrected.bs.length.std~ both$asr.sex.ms)
+kruskal.test(both$corrected.bs.length.std~ both$asr.sex.ms)
+
 
 #3. Try Mixed models
 #explore random data structure

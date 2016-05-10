@@ -160,10 +160,28 @@ ks.test(indiv$corrected.bs.length.std, pnorm)
 #2. Explore relations:------------
 attach(indiv)
 names(indiv)
+names(both)
 
 pairs(~ bs.start.std + bs.end.std + bs.length+total.nests.peryear, data=both, panel=panel.smooth)
 
 boxplot(bs.length.std~interaction(sex.available, ms),data=both,
+        ylab="Std length of breeding schedule")
+
+
+plot(corrected.bs.length.std~bs.start.std, data=both, cex=0.5)#, col=as.factor(pop.sp))
+abline(lm(corrected.bs.length.std[pop.sp %in% "Maio-KP"]~bs.start.std[pop.sp %in% "Maio-KP"], data=both), col=26)
+abline(lm(corrected.bs.length.std[pop.sp %in% "Ceuta-SP"]~bs.start.std[pop.sp %in% "Ceuta-SP"], data=both), col=27)
+abline(lm(corrected.bs.length.std[pop.sp %in% "Tuzla-KP"]~bs.start.std[pop.sp %in% "Tuzla-KP"], data=both), col=1)
+abline(lm(corrected.bs.length.std[pop.sp %in% "Madagascar-KiP"]~bs.start.std[pop.sp %in% "Madagascar-KiP"], data=both),col=4)
+abline(lm(corrected.bs.length.std[pop.sp %in% "Madagascar-WfP"]~bs.start.std[pop.sp %in% "Madagascar-WfP"], data=both), col=29)
+abline(lm(corrected.bs.length.std[pop.sp %in% "Madagascar-MP"]~bs.start.std[pop.sp %in% "Madagascar-MP"], data=both), col=30)
+
+legend(-3.5,6.9,lty=c(1,1,1,1,1,1), col=c(26,27,1,4,29,30), c("Maio-KP","Ceuta-SP","Tuzla-KP","Madagascar-KiP","Madagascar-WfP","Madagascar-MP"), cex=0.5, bty="n")
+
+plot(corrected.bs.length.std[pop.sp %in% "Madagascar-MP"]~bs.start.std[pop.sp %in% "Madagascar-MP"], data=both, cex=0.5)
+
+
+boxplot(corrected.bs.length.std~interaction(sex.available, pop.sp),data=both,
         ylab="Std length of breeding schedule")
 
 #3. Try Mixed models
@@ -190,7 +208,7 @@ library(lme4)
 library(nlme)
 
 #USING SEX.AVAILABLE
-mm1<-lme(corrected.bs.length.std ~ bs.start.std + total.nests.peryear + sex.available+  ms + ms:sex.available + year, random = ~1|id, method="ML", na.action=na.omit, data=both) #residual plot does not look good, needs change of error structure
+mm1<-lme(corrected.bs.length.std ~ bs.start.std + total.nests.peryear + sex.available+  ms + ms:sex.available + population, random = ~1|id, method="ML", na.action=na.omit, data=both) #residual plot does not look good, needs change of error structure
 
 mm.reml<-update(mm1, method="REML")
 
@@ -217,7 +235,7 @@ AIC(mm.reml,mm2,mm4,mm6,mm5)
 # mm5     22 3315.217
 
 #Model with random effects defined: (mm.r)
-mm.r<-lme(corrected.bs.length.std ~ bs.start.std + total.nests.peryear + sex.available +ms + ms:sex.available+ year, random = ~1|id, method="ML", na.action=na.omit, data=both)
+mm.r<-lme(corrected.bs.length.std ~ bs.start.std + total.nests.peryear + sex.available +pop.sp + pop.sp:sex.available+pop.sp:bs.start.std, random = ~1|id, method="ML", na.action=na.omit, data=both)
 
 summary(mm.r)
 c<-coef(mm.r)
@@ -258,6 +276,7 @@ plot(sresid~both$total.nests.peryear)
 plot(sresid~both$ms)
 plot(sresid~both$sex.available)
 plot(sresid~both$year)
+plot(sresid~both$pop.sp)
 
 #--------------Model selection------
 #selection of fixed terms has to be done using ML-fitted models and anova, test="F"
