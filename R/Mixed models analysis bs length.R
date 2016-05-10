@@ -208,7 +208,7 @@ library(lme4)
 library(nlme)
 
 #USING SEX.AVAILABLE
-mm1<-lme(corrected.bs.length.std ~ bs.start.std + total.nests.peryear + sex.available+  ms + ms:sex.available + population, random = ~1|id, method="ML", na.action=na.omit, data=both) #residual plot does not look good, needs change of error structure
+mm1<-lme(corrected.bs.length.std ~ bs.start.std + total.nests.peryear + sex.available +pop.sp + pop.sp:sex.available+pop.sp:bs.start.std, random = ~1|id, method="ML", na.action=na.omit, data=both) #residual plot does not look good, needs change of error structure
 
 mm.reml<-update(mm1, method="REML")
 
@@ -282,12 +282,12 @@ plot(sresid~both$pop.sp)
 #selection of fixed terms has to be done using ML-fitted models and anova, test="F"
 m<-mm.r
 summary(m)
-mm5<-update(m, .~. -ms:sex.available, .) 
+mm5<-update(m, .~.-pop.sp:sex.available, .) 
 anova(m,mm5) #use threshold of p<0.001 (Thomas, Vaughan & Lello, page 98)
-mm6<-update(mm5, .~. -year,.)
+mm6<-update(mm5, .~. -bs.start.std:pop.sp,.)
 anova(mm5,mm6)
 summary(mm6)
-mm7<-update(mm6, .~. -ms, .)
+mm7<-update(mm6, .~. -pop.sp, .)
 anova(mm6,mm7)
 summary(m)
 mm8 <- update(mm6, .~. -sex.available,.)
@@ -296,7 +296,7 @@ mm9<- update(mm6, .~. - total.nests.peryear)
 anova(mm6,mm9)
 mm10<-update(mm6, .~. - bs.start.std,.)
 anova(mm6,mm10)
-summary(mm7)
+summary(mm5)
 
 #mm11<-update(m, .~. -year,.)
 #anova(mm11, m)
@@ -313,7 +313,7 @@ ci[[2]]
 
 #-------model validation (based on Thomas, Vaughan and Lello book): and Pinhero and Bates book for mixed models
 #another way of testing this: #assumption: distribution of residuals is normal
-m<-mm6
+m<-mm5
 par(mfrow=c(2,3), pty="s")
 #m<-mm1
 sresid<-residuals(m)
@@ -332,14 +332,14 @@ qqp(residuals(m))
 #Test assumption of constant variance across groups:
 #boxplot of residuals by group 
 
-plot(m, id~resid(.), abline=0) #errors should be centered at 0 - constant variance across groups
-plot(m, species~resid(.), abline=0)
+plot(m, id~resid(.), abline=0, cex.lab=0.02,cex.names=0.02,cex.sub=0.2, cex=0.2) #errors should be centered at 0 - constant variance across groups
+plot(m, pop.sp~resid(.), abline=0)
 plot(m, population~resid(.), abline=0)
 
 plot(m, residuals.lme(., type="normalized") ~ fitted(.) | species, id=0.05, adj=-0.3)
 plot(m, residuals.lme(., type="normalized") ~ fitted(.) | population, id=0.05, adj=-0.3)
 
-qqnorm(m, ~resid(.)|population) #and the errors are reasonably close to normally distributed in all species
+qqnorm(m, ~resid(.)|pop.sp) #and the errors are reasonably close to normally distributed in all species
 plot(m, corrected.bs.length.std~fitted(.)) #The response variable is a reasonably linear function of the fitted values
 
 #plot residuals versus each x-variable
@@ -347,7 +347,7 @@ plot(sresid~both$bs.start.std[which(!is.na(both$bs.start.std))])
 length(sresid)
 length(which(!is.na(both$bs.start.std)))
 plot(sresid~both$total.nests.peryear[which(!is.na(both$total.nests.peryear))])
-plot(sresid~both$ms[which(!is.na(both$ms))])
+plot(sresid~both$pop.sp[which(!is.na(both$pop.sp))])
 plot(sresid~both$sex.available[which(!is.na(both$sex.available))])
 length(which(!is.na(both$ms)))
 
@@ -391,12 +391,13 @@ both$species<-as.factor(both$species)
 both$ms <- as.factor(both$ms)
 both$population<-as.factor(both$population)
 both$sex<-as.factor(both$sex)
+both$pop.sp<-as.factor(both$pop.sp)
 
 library(lme4)
 library(nlme)
 
 #USING SEX.MOL (sex)
-mm1<-lme(corrected.bs.length.std ~ bs.start.std + total.nests.peryear + sex+  ms + ms:sex + year, random = ~1|id, method="ML", na.action=na.omit, data=both) #residual plot does not look good, needs change of error structure
+mm1<-lme(corrected.bs.length.std ~ bs.start.std + total.nests.peryear + sex.available +pop.sp + pop.sp:sex.available+pop.sp:bs.start.std, random = ~1|id, method="ML", na.action=na.omit, data=both) #residual plot does not look good, needs change of error structure
 
 mm.reml<-update(mm1, method="REML")
 
@@ -418,7 +419,7 @@ AIC(mm.reml,mm2,mm4,mm6,mm5)
 
 
 #Model with random effects defined: (mm.r)
-mm.r<-lme(corrected.bs.length.std ~ bs.start.std + total.nests.peryear + sex +ms + ms:sex+ year, random = ~1|id, method="ML", na.action=na.omit, data=both)
+mm.r<-lme(corrected.bs.length.std ~ bs.start.std + total.nests.peryear + sex +pop.sp + pop.sp:sex+pop.sp:bs.start.std, random = ~1|id, method="ML", na.action=na.omit, data=both)
 
 summary(mm.r)
 c<-coef(mm.r)
@@ -427,6 +428,7 @@ head(c)
 #-------model validation (based on Thomas, Vaughan and Lello book): and Pinhero and Bates book for mixed models
 #another way of testing this: #assumption: distribution of residuals is normal
 m<-mm.r
+m<-mm7
 par(mfrow=c(2,3))
 sresid<-residuals(m)
 plot(fitted(m), sresid, xlab = "Fitted Values", ylab = "Residuals")
@@ -443,7 +445,7 @@ qqp(residuals(m))
 #boxplot of residuals by group 
 plot(m, id~resid(.), abline=0) #errors should be centered at 0 - constant variance across groups
 plot(m, species~resid(.), abline=0)
-plot(m, population~resid(.), abline=0)
+plot(m, pop.sp~resid(.), abline=0)
 
 plot(m, residuals.lme(., type="normalized") ~ fitted(.) | species, id=0.05, adj=-0.3)
 plot(m, residuals.lme(., type="normalized") ~ fitted(.) | population, id=0.05, adj=-0.3)
@@ -454,20 +456,20 @@ plot(m, corrected.bs.length.std~fitted(.)) #The response variable is a reasonabl
 #plot residuals versus each x-variable
 plot(sresid~both$bs.start.std[!is.na(both$bs.start.std)])
 plot(sresid~both$total.nests.peryear[!is.na(both$total.nests.peryear)])
-plot(sresid~both$ms[!is.na(both$ms)])
-plot(sresid~both$sex.available[!is.na(both$sex.available)])
+plot(sresid~both$pop.sp[!is.na(both$pop.sp)])
+plot(sresid~both$sex[!is.na(both$sex)])
 plot(sresid~both$year)
 
 #--------------Model selection------
 #selection of fixed terms has to be done using ML-fitted models and anova, test="F"
 m<-mm.r
 summary(m)
-mm5<-update(m, .~. -ms:sex, .) 
+mm5<-update(m, .~. -sex:pop.sp, .) 
 anova(m,mm5) #use threshold of p<0.001 (Thomas, Vaughan & Lello, page 98)
-mm6<-update(mm5, .~. -year,.)
+mm6<-update(mm5, .~. -bs.start.std:pop.sp,.)
 anova(mm5,mm6)
 summary(mm6)
-mm7<-update(mm6, .~. -ms, .)
+mm7<-update(mm6, .~. -pop.sp, .)
 anova(mm6,mm7)
 summary(m)
 mm8 <- update(mm6, .~. -sex,.)
@@ -476,7 +478,7 @@ mm9<- update(mm6, .~. - total.nests.peryear)
 anova(mm6,mm9)
 mm10<-update(mm6, .~. - bs.start.std,.)
 anova(mm6,mm10)
-summary(mm7)
+summary(mm5)
 
 #mm11<-update(m, .~. -year,.)
 #anova(mm11, m)
